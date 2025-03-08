@@ -8,7 +8,7 @@ import Dashboard from "./pages/profile/Dashboard";
 import CommunityHelp from "./pages/suport/CommunityHelp";
 
 import EventsPage from "./pages/events/EventsPage";
-import EventsPageCopy from "./components/modal/Modal";
+import EventsPageCopy from "./pages/events/EventsPageCopy";
 
 function App() {
   return (

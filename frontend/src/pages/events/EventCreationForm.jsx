@@ -18,7 +18,7 @@ const EventCreationForm = ({ onSubmit, onCancel }) => {
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-xl shadow-md">
       <h2 className="text-2xl font-bold mb-6">Create New Event</h2>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-2">
         <div>
           <label className="block text-sm font-medium mb-2">Event Title</label>
           <input
