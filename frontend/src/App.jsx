@@ -1,26 +1,35 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Login } from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
+
 import Home from "./pages/Home";
 import PageNotFound from "./pages/PageNotFound";
-import ProfileForm from "./pages/profile/ProfileForm";
 import Header from "./components/header/Header";
+import AuthPage from "./pages/auth/AuthPage";
+import Dashboard from "./pages/profile/Dashboard";
+import CommunityHelp from "./pages/suport/CommunityHelp";
+
+import EventsPage from "./pages/events/EventsPage";
+import EventsPageCopy from "./components/modal/Modal";
 
 function App() {
   return (
     <>
       <BrowserRouter>
         <Header />
-        <Routes>
-          <Route path="*" element={<PageNotFound />} />
-          <Route path="/" element={<Home />} />
-          <Route path="/profile" element={<ProfileForm />} />
-          {/* <Route path="/doctor/:id" element={<DoctorDetails />} /> */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          {/* <Route path="/contact" element={<Contact />} />
-          <Route path="/services" element={<Services />} /> */}
-          {/* <Route
+        <div className="pt-16">
+          <Routes>
+            <Route path="*" element={<PageNotFound />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/community" element={<CommunityHelp />} />
+            <Route path="/events" element={<EventsPage />} />
+            <Route path="/eventscopy" element={<EventsPageCopy />} />
+
+            {/* <Route path="/doctor/:id" element={<DoctorDetails />} /> */}
+
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/login" element={<AuthPage isLogin={true} />} />
+            <Route path="/signup" element={<AuthPage isLogin={false} />} />
+            {/* <Route
             path="/users/profile/me"
             element={
               <ProtectedRoute allowedRoles={["patient"]}>
@@ -36,7 +45,8 @@ function App() {
               </ProtectedRoute>
             }
           /> */}
-        </Routes>
+          </Routes>
+        </div>
       </BrowserRouter>
     </>
   );
