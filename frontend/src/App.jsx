@@ -10,6 +10,8 @@ import CommunityHelp from "./pages/suport/CommunityHelp";
 import EventsPage from "./pages/events/EventsPage";
 import EventsPageCopy from "./pages/events/EventsPageCopy";
 
+import HelpRequestCard from "./pages/community/HelpRequestCard";
+
 function App() {
   return (
     <>
@@ -23,6 +25,8 @@ function App() {
             <Route path="/community" element={<CommunityHelp />} />
             <Route path="/events" element={<EventsPage />} />
             <Route path="/eventscopy" element={<EventsPageCopy />} />
+
+            <Route path="/help" element={<HelpRequestCard />} />
 
             {/* <Route path="/doctor/:id" element={<DoctorDetails />} /> */}
 
