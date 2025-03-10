@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { FaSearch, FaPlus } from "react-icons/fa";
 
-import EventCreationForm from "./EventCreationForm";
+import Modal from "../../components/modal/Modal";
 import EventCard from "./EventsCard";
+import EventCreationForm from "./EventCreationForm";
 
 const EventsPage = () => {
   const [events, setEvents] = useState([
@@ -27,6 +28,10 @@ const EventsPage = () => {
     date: "",
   });
 
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+  };
+
   const handleCreateEvent = (formData) => {
     const newEvent = {
       ...formData,
@@ -38,6 +43,9 @@ const EventsPage = () => {
     setEvents([...events, newEvent]);
     setShowCreateModal(false);
   };
+
+  console.log("[selectedEvent]", selectedEvent);
+  console.log("[showCreateModal]", showCreateModal);
 
   return (
     <div className="max-w-7xl mx-auto p-6">
@@ -97,66 +105,67 @@ const EventsPage = () => {
         ))}
       </div>
 
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl">
-            <EventCreationForm
-              onSubmit={handleCreateEvent}
-              onCancel={() => setShowCreateModal(false)}
-            />
-          </div>
-        </div>
-      )}
+      {/* Modal for Creating Events */}
 
+      <Modal isOpen={showCreateModal} closeModal={closeCreateModal}>
+        <EventCreationForm
+          onSubmit={handleCreateEvent}
+          onCancel={() => setShowCreateModal(false)}
+        />
+      </Modal>
+
+      {/* Event Details Modal */}
       {selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-2xl">
-            <div className="flex justify-between items-start mb-6">
-              <h2 className="text-2xl font-bold">{selectedEvent.title}</h2>
-              <button
-                className="text-gray-500 hover:text-gray-700"
-                onClick={() => setSelectedEvent(null)}
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <p className="text-gray-600 mb-4">
-                  {selectedEvent.description}
-                </p>
-                <div className="space-y-2">
-                  <p>
-                    <strong>Date:</strong> {selectedEvent.date}
-                  </p>
-                  <p>
-                    <strong>Location:</strong> {selectedEvent.location}
-                  </p>
-                  <p>
-                    <strong>Volunteers:</strong>{" "}
-                    {selectedEvent.attendees.length}/
-                    {selectedEvent.volunteersNeeded}
-                  </p>
-                </div>
+        <Modal isOpen={selectedEvent && true} closeModal={closeCreateModal}>
+          <div className="p-4">
+            <div className="bg-white rounded-xl p-6 w-full max-w-2xl">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-bold">{selectedEvent.title}</h2>
+                <button
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => setSelectedEvent(null)}
+                >
+                  ✕
+                </button>
               </div>
 
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Attendees</h3>
-                <div className="flex flex-wrap gap-2">
-                  {selectedEvent.attendees.map((attendee, index) => (
-                    <span
-                      key={index}
-                      className="bg-gray-100 px-3 py-1 rounded-full"
-                    >
-                      {attendee}
-                    </span>
-                  ))}
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-gray-600 mb-4">
+                    {selectedEvent.description}
+                  </p>
+                  <div className="space-y-2">
+                    <p>
+                      <strong>Date:</strong> {selectedEvent.date}
+                    </p>
+                    <p>
+                      <strong>Location:</strong> {selectedEvent.location}
+                    </p>
+                    <p>
+                      <strong>Volunteers:</strong>{" "}
+                      {selectedEvent.attendees.length}/
+                      {selectedEvent.volunteersNeeded}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Attendees</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedEvent.attendees.map((attendee, index) => (
+                      <span
+                        key={index}
+                        className="bg-gray-100 px-3 py-1 rounded-full"
+                      >
+                        {attendee}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   );

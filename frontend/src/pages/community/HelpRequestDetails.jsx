@@ -1,85 +1,52 @@
-// src/components/CommunityHelp/HelpRequestDetails.jsx
-import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-
-const urgencyStyles = {
-  low: "bg-green-100 text-green-800",
-  medium: "bg-yellow-100 text-yellow-800",
-  urgent: "bg-red-100 text-red-800",
-};
-
-export default function HelpRequestDetails({ requests, onCommentSubmit }) {
-  const { id } = useParams();
-  const [comment, setComment] = useState("");
-  const request = requests.find((req) => req.id === id);
-
-  if (!request) return <div>Request not found</div>;
-
-  const handleCommentSubmit = (e) => {
-    e.preventDefault();
-    if (comment.trim()) {
-      onCommentSubmit(id, comment);
-      setComment("");
-    }
+// src/components/HelpRequestDetailsModal.jsx
+export const HelpRequestDetails = ({ request, onClose }) => {
+  const urgencyColors = {
+    low: "bg-green-100 text-green-800",
+    medium: "bg-yellow-100 text-yellow-800",
+    urgent: "bg-red-100 text-red-800",
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-md">
-      <Link to="/community-help" className="text-blue-500 mb-4 inline-block">
-        ← Back to Requests
-      </Link>
-      <div className="mb-6">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg p-6 w-full max-w-xl">
         <div className="flex justify-between items-start mb-4">
-          <h1 className="text-2xl font-bold">{request.title}</h1>
-          <span
-            className={`px-3 py-1 rounded-full ${
-              urgencyStyles[request.urgency]
-            }`}
+          <h3 className="text-2xl font-bold">{request.title}</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
           >
-            {request.urgency}
-          </span>
+            ✕
+          </button>
         </div>
-        <p className="text-gray-600 mb-4">{request.description}</p>
-        <div className="text-sm text-gray-500">
-          <p>Category: {request.category}</p>
-          <p>Posted: {new Date(request.date).toLocaleDateString()}</p>
-        </div>
-      </div>
+        <div className=" text-gray-900 pb-5">{request.description}</div>
 
-      <div className="border-t pt-4">
-        <h2 className="text-xl font-semibold mb-4">Offer Help</h2>
-        <button className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mb-4">
-          Send Private Message
-        </button>
-
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-2">
-            Comments ({request.comments.length})
-          </h3>
-          <form onSubmit={handleCommentSubmit} className="mb-4">
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              className="w-full p-2 border rounded mb-2"
-              placeholder="Write a comment..."
-              rows="3"
-            />
-            <button
-              type="submit"
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Category</p>
+            <p className="font-medium">{request.category}</p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Date Posted</p>
+            <p className="font-medium">
+              {new Date(request.date).toLocaleDateString()}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Urgency</p>
+            <p
+              className={`font-medium ${
+                urgencyColors[request.urgency]
+              } px-2 py-1 rounded`}
             >
-              Post Comment
-            </button>
-          </form>
-          <div className="space-y-4">
-            {request.comments.map((comment, index) => (
-              <div key={index} className="bg-gray-50 p-4 rounded">
-                <p className="text-gray-600">{comment}</p>
-              </div>
-            ))}
+              {request.urgency}
+            </p>
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 mb-1">Posted By</p>
+            <p className="font-medium">{request.creator}</p>
           </div>
         </div>
       </div>
     </div>
   );
-}
+};

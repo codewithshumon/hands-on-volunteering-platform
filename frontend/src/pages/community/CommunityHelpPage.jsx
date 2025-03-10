@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { HelpRequestCard } from "./HelpRequestCard";
 import { HelpRequestForm } from "./HelpRequestForm";
+import { HelpRequestCard } from "./HelpRequestCard";
 
-const helpRequestsMock = [
+const mockRequests = [
   {
     id: 1,
-    title: "Winter Clothes Distribution Help",
+    title: "Winter Clothes Distribution",
     description:
       "Need volunteers to distribute winter clothes to homeless people downtown",
     category: "Homeless Support",
@@ -22,104 +22,76 @@ const helpRequestsMock = [
       },
     ],
   },
+  {
+    id: 2,
+    title: "Weekly Tutoring Volunteers",
+    description: "Looking for educators to help with after-school program",
+    category: "Education",
+    urgency: "medium",
+    date: "2024-02-20",
+    creator: "Community Learning Center",
+    status: "open",
+    comments: [],
+  },
 ];
 
 export const CommunityHelpPage = () => {
-  const [requests, setRequests] = useState(helpRequestsMock);
-  const [showNewRequestForm, setShowNewRequestForm] = useState(false);
-  const [newRequest, setNewRequest] = useState({
-    title: "",
-    description: "",
-    category: "",
-    urgency: "medium",
-  });
+  const [requests, setRequests] = useState(mockRequests);
+  const [showForm, setShowForm] = useState(false);
 
-  const handleOfferHelp = (requestId) => {
-    setRequests(
-      requests.map((req) =>
-        req.id === requestId ? { ...req, status: "help-offered" } : req
-      )
-    );
-  };
-
-  const handleCommentSubmit = (requestId, commentText) => {
-    setRequests(
-      requests.map((req) => {
-        if (req.id === requestId) {
-          return {
-            ...req,
-            comments: [
-              ...req.comments,
-              {
-                id: req.comments.length + 1,
-                author: "Current User",
-                text: commentText,
-                date: new Date().toISOString().split("T")[0],
-              },
-            ],
-          };
-        }
-        return req;
-      })
-    );
-  };
-
-  const handleCreateRequest = () => {
-    const newId = requests.length + 1;
+  const handleCreateRequest = (newRequest) => {
     setRequests([
       ...requests,
       {
-        id: newId,
+        id: requests.length + 1,
         ...newRequest,
-        date: new Date().toISOString().split("T")[0],
+        date: new Date().toISOString(),
         creator: "Current User",
         status: "open",
         comments: [],
       },
     ]);
-    setShowNewRequestForm(false);
-    setNewRequest({
-      title: "",
-      description: "",
-      category: "",
-      urgency: "medium",
-    });
+  };
+
+  const handleOfferHelp = (requestId) => {
+    setRequests(
+      requests.map((req) =>
+        req.id === requestId ? { ...req, status: "helping" } : req
+      )
+    );
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Community Help Requests
-        </h1>
-        <button
-          onClick={() => setShowNewRequestForm(true)}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-        >
-          Create New Request
-        </button>
-      </div>
+    <div className="min-h-screen bg-gray-50 p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Community Help Board
+          </h1>
+          <button
+            onClick={() => setShowForm(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            + New Request
+          </button>
+        </div>
 
-      {showNewRequestForm && (
-        <HelpRequestForm
-          newRequest={newRequest}
-          setNewRequest={setNewRequest}
-          onCreateRequest={handleCreateRequest}
-          onCancel={() => setShowNewRequestForm(false)}
-        />
-      )}
+        {showForm && (
+          <HelpRequestForm
+            onCreateRequest={handleCreateRequest}
+            onCancel={() => setShowForm(false)}
+          />
+        )}
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {requests.map((request, index) =>
-          request ? ( // Ensure request is not undefined
+        <div className="grid grid-cols-1 gap-6">
+          {requests.map((request) => (
             <HelpRequestCard
-              key={request.id || index}
+              key={request.id}
               request={request}
               onOfferHelp={handleOfferHelp}
-              onCommentSubmit={handleCommentSubmit}
             />
-          ) : null
-        )}
+          ))}
+        </div>
       </div>
     </div>
   );

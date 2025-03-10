@@ -5,12 +5,8 @@ import PageNotFound from "./pages/PageNotFound";
 import Header from "./components/header/Header";
 import AuthPage from "./pages/auth/AuthPage";
 import Dashboard from "./pages/profile/Dashboard";
-import CommunityHelp from "./pages/suport/CommunityHelp";
-
 import EventsPage from "./pages/events/EventsPage";
-import EventsPageCopy from "./pages/events/EventsPageCopy";
-
-import HelpRequestCard from "./pages/community/HelpRequestCard";
+import { CommunityHelpPage } from "./pages/community/CommunityHelpPage";
 
 function App() {
   return (
@@ -22,11 +18,8 @@ function App() {
             <Route path="*" element={<PageNotFound />} />
             <Route path="/" element={<Home />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/community" element={<CommunityHelp />} />
+            <Route path="/community" element={<CommunityHelpPage />} />
             <Route path="/events" element={<EventsPage />} />
-            <Route path="/eventscopy" element={<EventsPageCopy />} />
-
-            <Route path="/help" element={<HelpRequestCard />} />
 
             {/* <Route path="/doctor/:id" element={<DoctorDetails />} /> */}
 
