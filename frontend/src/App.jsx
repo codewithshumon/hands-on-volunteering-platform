@@ -7,11 +7,12 @@ import AuthPage from "./pages/auth/AuthPage";
 import Dashboard from "./pages/profile/Dashboard";
 import EventsPage from "./pages/events/EventsPage";
 import { CommunityHelpPage } from "./pages/community/CommunityHelpPage";
-import {
-  TeamDashboard,
-  TeamDashboardPage,
-} from "./pages/team/TeamDashboardPage";
-import { TeamsListingPage } from "./pages/team/TeamsListingPage";
+
+import TeamDetailsPage from "./pages/team/TeamDetailsPage";
+import TeamPage from "./pages/team/TeamPage";
+import ImpactDashboard from "./pages/traking/ImpactDashboardPage";
+import LeaderboardPage from "./pages/traking/LeaderboardPage";
+import LogHoursPage from "./pages/traking/LogHourPage";
 
 function App() {
   return (
@@ -26,10 +27,14 @@ function App() {
             <Route path="/community" element={<CommunityHelpPage />} />
             <Route path="/events" element={<EventsPage />} />
 
-            <Route path="/teams" element={<TeamsListingPage />} />
-            <Route path="/teams/create" element={<CreateTeamPage />} />
-            <Route path="/teams/:teamId" element={<TeamDashboardPage />} />
             {/* <Route path="/doctor/:id" element={<DoctorDetails />} /> */}
+
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/team/:teamId" element={<TeamDetailsPage />} />
+
+            <Route path="/impact" element={<ImpactDashboard />} />
+            <Route path="/impactboard" element={<LeaderboardPage />} />
+            <Route path="/LogHourPage" element={<LogHoursPage />} />
 
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage isLogin={true} />} />

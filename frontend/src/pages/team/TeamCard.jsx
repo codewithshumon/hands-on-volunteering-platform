@@ -1,29 +1,19 @@
-import { useState } from "react";
-
-export const TeamCard = ({ team, onJoin }) => {
-  const [isJoining, setIsJoining] = useState(false);
-
-  const handleJoin = async () => {
-    setIsJoining(true);
-    setTimeout(() => {
-      // Simulate async operation
-      onJoin(team.id);
-      setIsJoining(false);
-    }, 1000);
-  };
-
+const TeamCard = ({ team, onViewDetails }) => {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-      {/* ... (keep previous TeamCard implementation) */}
-      {team.type === "public" && (
-        <button
-          onClick={handleJoin}
-          disabled={isJoining}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
-        >
-          {isJoining ? "Joining..." : "Join Team"}
-        </button>
-      )}
+    <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+      <h3 className="text-xl font-semibold text-gray-800 mb-2">{team.name}</h3>
+      <p className="text-gray-600 mb-4">{team.description}</p>
+      <p className="text-sm text-gray-500 mb-4">
+        Type: {team.type === "public" ? "🌍 Public" : "🔒 Private"}
+      </p>
+      <button
+        onClick={() => onViewDetails(team.id)}
+        className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+      >
+        View Details
+      </button>
     </div>
   );
 };
+
+export default TeamCard;

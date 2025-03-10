@@ -1,0 +1,17 @@
+export const mockMembers = [
+  { id: 1, name: "Alice Johnson" },
+  { id: 2, name: "Bob Smith" },
+  { id: 3, name: "Charlie Brown" },
+  { id: 4, name: "Diana Prince" },
+  { id: 5, name: "Evan Wright" },
+  { id: 6, name: "Fiona Green" },
+  { id: 7, name: "George Harris" },
+  { id: 8, name: "Hannah Lee" },
+  { id: 9, name: "Ian Clark" },
+  { id: 10, name: "Jane Doe" },
+  { id: 11, name: "Kevin White" },
+  { id: 12, name: "Lily Evans" },
+  { id: 13, name: "Mike Ross" },
+  { id: 14, name: "Nina Patel" },
+  { id: 15, name: "Oscar Martinez" },
+];
