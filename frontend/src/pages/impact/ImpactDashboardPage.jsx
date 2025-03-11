@@ -16,15 +16,20 @@ import VerificationAlert from "../../components/impact/VerificationAlert";
 
 const ImpactDashboardPage = () => {
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-[#eeeded] min-h-screen">
       {/* Header Section */}
       <div className="mb-8 flex justify-between items-start">
-        <div>
+        <div className=" flex flex-col gap-5">
           <h1 className="text-3xl font-bold text-gray-900">Impact Dashboard</h1>
-          <p className="text-gray-600 mt-2">
-            {currentUser.totalHours} verified hours • {currentUser.points}{" "}
-            points
-          </p>
+          <div>
+            <div className="text-gray-900 text-[1.3rem] font-bold">
+              Hi, {currentUser.name}
+            </div>
+            <p className="text-gray-600 ">
+              {currentUser.totalHours} verified hours • {currentUser.points}{" "}
+              points
+            </p>
+          </div>
         </div>
         <button className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium">
           Log Hours
@@ -37,27 +42,63 @@ const ImpactDashboardPage = () => {
       )}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h3 className="text-gray-500 text-sm font-medium">Current Rank</h3>
-          <p className="text-3xl font-bold text-gray-900 mt-2">
-            #{currentUser.rank}
-          </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* First two divs stacked in the first column */}
+        <div className="space-y-6 md:col-span-1">
+          {/* Current Rank Card */}
+          <div className="bg-gradient-to-br from-purple-50 to-white p-6 rounded-xl border border-purple-100">
+            <h3 className="text-sm font-medium text-purple-600 uppercase tracking-wider">
+              Current Rank
+            </h3>
+            <p className="text-4xl font-bold text-gray-900 mt-2">
+              #{currentUser.rank}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              You're doing great! Keep it up.
+            </p>
+          </div>
+
+          {/* Next Milestone Card */}
+          <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-100">
+            <h3 className="text-sm font-medium text-blue-600 uppercase tracking-wider">
+              Next Milestone
+            </h3>
+            <MilestoneProgressBar
+              currentHours={currentUser.totalHours}
+              milestones={milestones}
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              Reach the next milestone to unlock rewards.
+            </p>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h3 className="text-gray-500 text-sm font-medium">Next Milestone</h3>
-          <MilestoneProgressBar
-            currentHours={currentUser.totalHours}
-            milestones={milestones}
-          />
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm">
-          <h3 className="text-gray-500 text-sm font-medium">Certificates</h3>
-          <div className="mt-2 flex space-x-2">
+
+        {/* Certificates Card - Takes the second column */}
+        <div className="bg-gradient-to-br from-green-50 to-white p-6 rounded-xl border border-green-100 md:col-span-1">
+          <h3 className="text-sm font-medium text-green-600 uppercase tracking-wider">
+            Certificates
+          </h3>
+          <div className="mt-4 space-y-4">
             {certificates.map((cert) => (
-              <CertificateBadge key={cert.id} certificate={cert} />
+              <div
+                key={cert.id}
+                className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-100"
+              >
+                <div>
+                  <p className="font-medium text-gray-900">{cert.title}</p>
+                  <p className="text-sm text-gray-500">
+                    Earned on {cert.dateEarned}
+                  </p>
+                </div>
+                <span className="text-2xl">🏆</span>
+              </div>
             ))}
           </div>
+          {certificates.length === 0 && (
+            <p className="text-sm text-gray-500 mt-2">
+              No certificates earned yet. Keep volunteering!
+            </p>
+          )}
         </div>
       </div>
 
