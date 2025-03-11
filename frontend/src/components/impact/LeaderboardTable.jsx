@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const LeaderboardTable = ({ users, currentUserId }) => {
-  // State for sorting
+  const location = useLocation(); // Get current URL path
+  const navigate = useNavigate(); // For navigation
   const [sortBy, setSortBy] = useState("points"); // Default sort by points
 
   // Sorting logic
@@ -15,6 +17,12 @@ const LeaderboardTable = ({ users, currentUserId }) => {
     }
     return 0;
   });
+
+  // Determine if we're on the "/impact" route
+  const isImpactRoute = location.pathname === "/impact";
+
+  // Slice users to show only 5 if on "/impact"
+  const displayedUsers = isImpactRoute ? sortedUsers.slice(0, 5) : sortedUsers;
 
   return (
     <div className="bg-white rounded-xl shadow-sm p-6">
@@ -39,7 +47,7 @@ const LeaderboardTable = ({ users, currentUserId }) => {
 
       {/* Leaderboard List */}
       <div className="space-y-3">
-        {sortedUsers.map((user) => (
+        {displayedUsers.map((user) => (
           <div
             key={user.id}
             className={`flex items-center p-4 rounded-lg ${
@@ -91,6 +99,18 @@ const LeaderboardTable = ({ users, currentUserId }) => {
           </div>
         ))}
       </div>
+
+      {/* "View All" Button (only on "/impact" route) */}
+      {isImpactRoute && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => navigate("/impact/leader-board")} // Navigate to leaderboard page
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors"
+          >
+            View All
+          </button>
+        </div>
+      )}
     </div>
   );
 };
