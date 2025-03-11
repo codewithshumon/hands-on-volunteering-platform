@@ -1,32 +1,27 @@
-const LeaderboardTable = ({ users = [] }) => {
-  // Fallback to an empty array if users is undefined
+const LeaderboardTable = ({ users }) => {
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <table className="w-full">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="text-left py-4 px-6">Rank</th>
-            <th className="text-left py-4 px-6">Name</th>
-            <th className="text-left py-4 px-6">Hours</th>
-            <th className="text-left py-4 px-6">Points</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((user, index) => (
-            <tr
-              key={user.id}
-              className="border-b hover:bg-gray-50 transition-colors"
-            >
-              <td className="py-4 px-6">{index + 1}</td>
-              <td className="py-4 px-6 font-medium">{user.name}</td>
-              <td className="py-4 px-6">{user.totalHours}</td>
-              <td className="py-4 px-6 text-blue-600 font-semibold">
-                {user.points}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="bg-white rounded-2xl shadow-2xl p-6 ">
+      <h3 className="text-2xl font-bold text-gray-900 mb-4">
+        Top Contributors
+      </h3>
+      <div className="space-y-4">
+        {users.map((user) => (
+          <div key={user.id} className="flex items-center space-x-4">
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-10 h-10 rounded-full"
+            />
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">{user.name}</p>
+              <p className="text-gray-600">{user.points} points</p>
+            </div>
+            <span className="text-xl font-bold text-purple-600">
+              #{user.rank}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

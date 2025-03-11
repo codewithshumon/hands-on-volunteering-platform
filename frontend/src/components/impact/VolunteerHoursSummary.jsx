@@ -1,16 +1,22 @@
+import { Clock } from "react-feather";
+
+// Enhanced Components
 const VolunteerHoursSummary = ({ user }) => (
-  <div className="bg-white p-6 rounded-lg shadow-md">
-    <h2 className="text-xl font-bold mb-4">Volunteer Summary</h2>
-    <div className="space-y-2">
-      <p>
-        <span className="font-semibold">Total Hours:</span> {user.totalHours}
-      </p>
-      <p>
-        <span className="font-semibold">Points Earned:</span> {user.points}
-      </p>
-      <p>
-        <span className="font-semibold">Next Milestone:</span>
-      </p>
+  <div className="space-y-4">
+    <div className="flex items-center gap-4">
+      <div className="rounded-lg bg-blue-100 p-3">
+        <Clock className="h-6 w-6 text-blue-600" />
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">Volunteer Hours</h3>
+        <p className="text-2xl font-bold text-gray-900">{user.totalHours}h</p>
+      </div>
+    </div>
+    <div className="h-2 rounded-full bg-gray-200">
+      <div
+        className="h-2 rounded-full bg-blue-600"
+        style={{ width: `${Math.min((user.totalHours / 100) * 100, 100)}%` }}
+      />
     </div>
   </div>
 );
