@@ -8,11 +8,13 @@ import Dashboard from "./pages/profile/Dashboard";
 import EventsPage from "./pages/events/EventsPage";
 import { CommunityHelpPage } from "./pages/community/CommunityHelpPage";
 
-import TeamDetailsPage from "./pages/team/TeamDetailsPage";
-import TeamPage from "./pages/team/TeamPage";
-import ImpactDashboard from "./pages/traking/ImpactDashboardPage";
-import LeaderboardPage from "./pages/traking/LeaderboardPage";
-import LogHoursPage from "./pages/traking/LogHourPage";
+import TeamPage from "./pages/teams/TeamsPage";
+import TeamDetailsPage from "./pages/teams/TeamsDetailsPage";
+import TeamsLeaderboardPage from "./pages/teams/TeamsLeaderboardPage";
+
+import ImpactDashboard from "./pages/impact/ImpactDashboardPage";
+import ImpactLeaderboardPage from "./pages/impact/ImpactLeaderboardPage";
+import LogHoursPage from "./pages/impact/LogHourPage";
 
 function App() {
   return (
@@ -23,22 +25,26 @@ function App() {
           <Routes>
             <Route path="*" element={<PageNotFound />} />
             <Route path="/" element={<Home />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/community" element={<CommunityHelpPage />} />
-            <Route path="/events" element={<EventsPage />} />
-
-            {/* <Route path="/doctor/:id" element={<DoctorDetails />} /> */}
-
-            <Route path="/team" element={<TeamPage />} />
-            <Route path="/team/:teamId" element={<TeamDetailsPage />} />
-
-            <Route path="/impact" element={<ImpactDashboard />} />
-            <Route path="/impactboard" element={<LeaderboardPage />} />
-            <Route path="/LogHourPage" element={<LogHoursPage />} />
 
             <Route path="/auth" element={<AuthPage />} />
             <Route path="/login" element={<AuthPage isLogin={true} />} />
             <Route path="/signup" element={<AuthPage isLogin={false} />} />
+
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/events" element={<EventsPage />} />
+            <Route path="/community" element={<CommunityHelpPage />} />
+
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/teams" element={<TeamsLeaderboardPage />} />
+            <Route path="/team/:teamId" element={<TeamDetailsPage />} />
+
+            <Route path="/impact" element={<ImpactDashboard />} />
+            <Route
+              path="/impact/leader-board"
+              element={<ImpactLeaderboardPage />}
+            />
+            <Route path="/log-hour" element={<LogHoursPage />} />
+
             {/* <Route
             path="/users/profile/me"
             element={

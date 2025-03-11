@@ -13,7 +13,6 @@ const TeamDashboard = ({ team, members }) => {
         </h2>
 
         <div className="w-fit h-fit">
-          {/* here team.admin === user.id */}
           {team.admin === 1 && (
             <button
               onClick={() => console.log("Delete team:", team.id)}

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { mockTeams } from "../../data/mockTeams";
-import CreateTeamModal from "./CreateTeamModal";
-import TeamLeaderboard from "./TeamLeaderboard";
-import TeamCard from "./TeamCard";
+import CreateTeamModal from "../../components/teams/CreateTeamModal";
+import TeamCard from "../../components/teams/TeamCard";
+import TeamLeaderboard from "../../components/teams/TeamLeaderboard";
 
 const TeamPage = () => {
   const [teams, setTeams] = useState(mockTeams);

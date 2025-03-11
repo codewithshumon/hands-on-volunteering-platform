@@ -1,8 +1,8 @@
 import { currentUser, events, users } from "../../data/mockData";
-import ImpactEventCard from "./ImpactEventCard";
-import LeaderboardTable from "./LeaderboardTable";
-import MilestoneProgressBar from "./MilestoneProgressBar";
-import VolunteerHoursSummary from "./VolunteerHoursSummary";
+import ImpactEventCard from "../../components/impact/ImpactEventCard";
+import LeaderboardTable from "../../components/impact/LeaderboardTable";
+import MilestoneProgressBar from "../../components/impact/MilestoneProgressBar";
+import VolunteerHoursSummary from "../../components/impact/VolunteerHoursSummary";
 
 const ImpactDashboardPage = () => {
   return (

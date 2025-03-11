@@ -2,8 +2,8 @@ import { useState } from "react";
 import { FaSearch, FaPlus } from "react-icons/fa";
 
 import Modal from "../../components/modal/Modal";
-import EventCard from "./EventsCard";
-import EventCreationForm from "./EventCreationForm";
+import EventCreationForm from "../../components/events/EventCreationForm";
+import EventCard from "../../components/events/EventsCard";
 
 const EventsPage = () => {
   const [events, setEvents] = useState([

@@ -1,4 +1,3 @@
-// src/components/HelpRequestDetailsModal.jsx
 export const HelpRequestDetails = ({ request, onClose }) => {
   const urgencyColors = {
     low: "bg-green-100 text-green-800",

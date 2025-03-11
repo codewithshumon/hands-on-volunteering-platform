@@ -1,5 +1,5 @@
 import { events } from "../../data/mockData";
-import ImpactEventCard from "./ImpactEventCard";
+import ImpactEventCard from "../../components/impact/ImpactEventCard";
 
 const LogHoursPage = () => {
   return (

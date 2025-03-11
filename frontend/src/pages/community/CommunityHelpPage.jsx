@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { HelpRequestForm } from "./HelpRequestForm";
-import { HelpRequestCard } from "./HelpRequestCard";
+
+import { HelpRequestForm } from "../../components/community/HelpRequestForm";
+import { HelpRequestCard } from "../../components/community/HelpRequestCard";
 
 const mockRequests = [
   {
