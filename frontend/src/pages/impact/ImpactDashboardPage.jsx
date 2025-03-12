@@ -8,13 +8,13 @@ import {
   users,
 } from "../../data/mockData";
 
-import CertificateBadge from "../../components/impact/CertificateBadge";
-import ImpactEventCard from "../../components/impact/ImpactEventCard";
 import LeaderboardTable from "../../components/impact/LeaderboardTable";
 import MilestoneProgressBar from "../../components/impact/MilestoneProgressBar";
 import VerificationAlert from "../../components/impact/VerificationAlert";
+import ImpactEventsCardList from "../../components/impact/ImpactEventsCardList";
 
 const ImpactDashboardPage = () => {
+  console.log("[events]", events);
   return (
     <div className="p-6 bg-[#eeeded] min-h-screen">
       {/* Header Section */}
@@ -117,9 +117,7 @@ const ImpactDashboardPage = () => {
             Recent Events
           </h2>
           <div className="space-y-4">
-            {events.map((event) => (
-              <ImpactEventCard key={event.id} event={event} />
-            ))}
+            <ImpactEventsCardList events={events} />
           </div>
         </div>
 

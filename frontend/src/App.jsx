@@ -43,7 +43,7 @@ function App() {
               path="/impact/leader-board"
               element={<ImpactLeaderboardPage />}
             />
-            <Route path="/log-hour" element={<LogHoursPage />} />
+            <Route path="impact/log-hour" element={<LogHoursPage />} />
 
             {/* <Route
             path="/users/profile/me"
