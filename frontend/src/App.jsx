@@ -1,4 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 import Home from "./pages/Home";
 import PageNotFound from "./pages/PageNotFound";
@@ -15,12 +17,16 @@ import TeamsLeaderboardPage from "./pages/teams/TeamsLeaderboardPage";
 import ImpactDashboard from "./pages/impact/ImpactDashboardPage";
 import ImpactLeaderboardPage from "./pages/impact/ImpactLeaderboardPage";
 import LogHoursPage from "./pages/impact/LogHourPage";
+import Login from "./pages/test/Login";
+import Signup from "./pages/test/Signup";
+import VerifyEmail from "./pages/test/VerifyEmail";
 
 function App() {
   return (
     <>
       <BrowserRouter>
         <Header />
+        <ToastContainer />
         <div className="pt-16">
           <Routes>
             <Route path="*" element={<PageNotFound />} />
@@ -44,6 +50,10 @@ function App() {
               element={<ImpactLeaderboardPage />}
             />
             <Route path="impact/log-hour" element={<LogHoursPage />} />
+
+            <Route path="test/login" element={<Login />} />
+            <Route path="test/signup" element={<Signup />} />
+            <Route path="test/verify-email" element={<VerifyEmail />} />
 
             {/* <Route
             path="/users/profile/me"
