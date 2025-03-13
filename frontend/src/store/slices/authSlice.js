@@ -1,43 +1,26 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import axios from "axios";
+import { createSlice } from "@reduxjs/toolkit";
 
-export const fetchUserData = createAsyncThunk(
-  "auth/fetchUserData",
-  async (token) => {
-    const response = await axios.get("/api/v1/user", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  }
-);
+const initialState = {
+  user: JSON.parse(localStorage.getItem("user")) || null,
+  token: localStorage.getItem("token") || null,
+};
 
 const authSlice = createSlice({
   name: "auth",
-  initialState: {
-    user: null,
-    token: null,
-    isAuthenticated: false,
-  },
+  initialState,
   reducers: {
-    loginSuccess(state, action) {
+    loginSuccess: (state, action) => {
       state.user = action.payload.user;
       state.token = action.payload.token;
-      state.isAuthenticated = true;
+      localStorage.setItem("user", JSON.stringify(action.payload.user));
+      localStorage.setItem("token", action.payload.token);
     },
-    logout(state) {
+    logout: (state) => {
       state.user = null;
       state.token = null;
-      state.isAuthenticated = false;
+      localStorage.removeItem("user");
       localStorage.removeItem("token");
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(fetchUserData.fulfilled, (state, action) => {
-      state.user = action.payload;
-      state.isAuthenticated = true;
-    });
   },
 });
 

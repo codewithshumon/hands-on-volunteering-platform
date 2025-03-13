@@ -1,8 +1,12 @@
 /* eslint-disable no-unused-vars */
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
+import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../../store/slices/authSlice";
 
 const AuthPage = ({ isLogin: propIsLogin }) => {
   const [isLogin, setIsLogin] = useState(propIsLogin ?? true);
@@ -11,20 +15,63 @@ const AuthPage = ({ isLogin: propIsLogin }) => {
     password: "",
     ...(isLogin ? {} : { name: "" }),
   });
+  const [loading, setLoading] = useState(false); // Track loading state
+
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Pre-fill email if coming from signup
+  if (location.state?.email && isLogin) {
+    setFormData((prev) => ({ ...prev, email: location.state.email }));
+  }
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(isLogin ? "Logging in..." : "Signing up...", formData);
+    setLoading(true); // Start loading
+
+    try {
+      if (isLogin) {
+        // Login logic
+        const response = await axios.post(
+          "http://localhost:3000/api/v1/auth/login",
+          formData
+        );
+        const { token, data: user } = response.data;
+
+        // Dispatch login success action to Redux
+        dispatch(loginSuccess({ token, user }));
+
+        // Store token in localStorage
+        localStorage.setItem("token", token);
+
+        // Redirect to dashboard or home page
+        navigate("/dashboard");
+      } else {
+        // Signup logic
+        const response = await axios.post(
+          "http://localhost:3000/api/v1/auth/signup",
+          formData
+        );
+
+        // Redirect to verify-email page with email as state
+        navigate("/verify-email", { state: { email: formData.email } });
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+    } finally {
+      setLoading(false); // Stop loading
+    }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div className="top-[-30px] flex flex-col items-center justify-center min-h-screen bg-gray-100">
       <motion.div
-        className="max-w-md mx-auto bg-white p-6 rounded-lg shadow-lg"
+        className="max-w-lg w-[30vw] mx-auto bg-white p-6 rounded-lg shadow-lg"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -82,9 +129,16 @@ const AuthPage = ({ isLogin: propIsLogin }) => {
           </div>
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center"
+            disabled={loading} // Disable button while loading
           >
-            {isLogin ? "Login" : "Sign Up"}
+            {loading ? (
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+            ) : isLogin ? (
+              "Login"
+            ) : (
+              "Sign Up"
+            )}
           </button>
         </form>
         <p className="mt-4 text-gray-600">

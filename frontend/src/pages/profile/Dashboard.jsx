@@ -58,7 +58,7 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
         {/* Left Side - User Profile */}
         <div className="md:col-span-1 bg-white rounded-xl shadow-md p-6 h-fit">

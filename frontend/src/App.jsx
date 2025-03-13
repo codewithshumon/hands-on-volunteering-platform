@@ -3,12 +3,17 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import { Provider } from "react-redux";
-import { store } from "./store/store";
+import store from "./store/store";
 
-import Home from "./pages/Home";
 import PageNotFound from "./pages/PageNotFound";
 import Header from "./components/header/Header";
+
+import AuthGuard from "./routes/AuthGuard";
+
 import AuthPage from "./pages/auth/AuthPage";
+import VerifyEmail from "./pages/auth/VerifyEmail";
+
+import Home from "./pages/Home";
 import Dashboard from "./pages/profile/Dashboard";
 import EventsPage from "./pages/events/EventsPage";
 import { CommunityHelpPage } from "./pages/community/CommunityHelpPage";
@@ -20,51 +25,66 @@ import TeamsLeaderboardPage from "./pages/teams/TeamsLeaderboardPage";
 import ImpactDashboard from "./pages/impact/ImpactDashboardPage";
 import ImpactLeaderboardPage from "./pages/impact/ImpactLeaderboardPage";
 import LogHoursPage from "./pages/impact/LogHourPage";
+
 import Login from "./pages/test/Login";
 import Signup from "./pages/test/Signup";
-import VerifyEmail from "./pages/test/VerifyEmail";
-import ProtectedRoute from "./routes/ProtectedRoute";
+import TestVerifyEmail from "./pages/test/VerifyEmail";
 
 function App() {
   return (
     <>
-      <BrowserRouter>
-        <Provider store={store}>
+      <Provider store={store}>
+        <BrowserRouter>
           <Header />
           <ToastContainer />
-          <div className="pt-16">
-            <Routes>
-              <Route path="*" element={<PageNotFound />} />
-              <Route path="/" element={<Home />} />
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<AuthPage />} />
+            <Route path="/login" element={<AuthPage isLogin={true} />} />
+            <Route path="/signup" element={<AuthPage isLogin={false} />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
 
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/login" element={<AuthPage isLogin={true} />} />
-              <Route path="/signup" element={<AuthPage isLogin={false} />} />
+            {/* Protected Routes */}
+            <Route
+              path="/*"
+              element={
+                <AuthGuard type="protected" url="/test/login">
+                  <Routes>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/events" element={<EventsPage />} />
+                    <Route path="/community" element={<CommunityHelpPage />} />
+                    <Route path="/team" element={<TeamPage />} />
+                    <Route path="/teams" element={<TeamsLeaderboardPage />} />
+                    <Route path="/team/:teamId" element={<TeamDetailsPage />} />
+                    <Route path="/impact" element={<ImpactDashboard />} />
+                    <Route
+                      path="/impact/leader-board"
+                      element={<ImpactLeaderboardPage />}
+                    />
+                    <Route path="impact/log-hour" element={<LogHoursPage />} />
+                    <Route path="*" element={<PageNotFound />} />
+                  </Routes>
+                </AuthGuard>
+              }
+            />
 
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/events" element={<EventsPage />} />
-              <Route path="/community" element={<CommunityHelpPage />} />
-
-              <Route path="/team" element={<TeamPage />} />
-              <Route path="/teams" element={<TeamsLeaderboardPage />} />
-              <Route path="/team/:teamId" element={<TeamDetailsPage />} />
-
-              <Route path="/impact" element={<ImpactDashboard />} />
-              <Route
-                path="/impact/leader-board"
-                element={<ImpactLeaderboardPage />}
-              />
-              <Route path="impact/log-hour" element={<LogHoursPage />} />
-
-              <Route element={<ProtectedRoute redirectPath="/dashboard" />}>
-                <Route path="test/login" element={<Login />} />
-                <Route path="test/signup" element={<Signup />} />
-                <Route path="test/verify-email" element={<VerifyEmail />} />
-              </Route>
-            </Routes>
-          </div>
-        </Provider>
-      </BrowserRouter>
+            {/* Redirect Routes */}
+            <Route
+              path="/test/*"
+              element={
+                <AuthGuard type="redirect" url="/dashboard">
+                  <Routes>
+                    <Route path="login" element={<Login />} />
+                    <Route path="signup" element={<Signup />} />
+                    <Route path="verify-email" element={<TestVerifyEmail />} />
+                  </Routes>
+                </AuthGuard>
+              }
+            />
+          </Routes>
+        </BrowserRouter>
+      </Provider>
     </>
   );
 }

@@ -16,7 +16,7 @@ import ImpactEventsCardList from "../../components/impact/ImpactEventsCardList";
 const ImpactDashboardPage = () => {
   console.log("[events]", events);
   return (
-    <div className="p-6 bg-[#eeeded] min-h-screen">
+    <div className="p-6 bg-[#eeeded] min-h-screen pt-16">
       {/* Header Section */}
       <div className="mb-8 flex justify-between items-start">
         <div className=" flex flex-col gap-5">

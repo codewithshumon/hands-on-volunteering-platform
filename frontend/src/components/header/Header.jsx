@@ -1,10 +1,14 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import { FaHandsHelping, FaBell, FaUserCircle, FaSearch } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+
+  const token = useSelector((state) => state.auth.token);
+  const currentUser = useSelector((state) => state.auth.user);
 
   return (
     <header className="bg-white shadow-sm fixed w-full top-0 z-50">
@@ -41,22 +45,26 @@ const Header = () => {
             </button>
 
             {/* Desktop Search */}
-            <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2">
-              <FaSearch className="text-gray-500 mr-2" />
-              <input
-                type="text"
-                placeholder="Search events or causes..."
-                className="bg-transparent outline-none w-48"
-              />
-            </div>
+            {token && currentUser && (
+              <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2">
+                <FaSearch className="text-gray-500 mr-2" />
+                <input
+                  type="text"
+                  placeholder="Search events or causes..."
+                  className="bg-transparent outline-none w-48"
+                />
+              </div>
+            )}
 
             {/* Notification Bell */}
-            <button className="text-gray-600 hover:text-blue-600 relative">
-              <FaBell className="h-5 w-5" />
-              <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                3
-              </span>
-            </button>
+            {token && currentUser && (
+              <button className="text-gray-600 hover:text-blue-600 relative">
+                <FaBell className="h-5 w-5" />
+                <span className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  3
+                </span>
+              </button>
+            )}
 
             {/* User Profile */}
             <div className="relative">
@@ -64,11 +72,26 @@ const Header = () => {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center text-gray-700 hover:text-blue-600"
               >
-                <FaUserCircle className="h-7 w-7" />
+                {token && currentUser ? (
+                  <div>
+                    {currentUser.profileImage ? (
+                      <div></div>
+                    ) : (
+                      <FaUserCircle className="h-7 w-7" />
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="ml-2 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition duration-300"
+                  >
+                    Join the Community
+                  </Link>
+                )}
               </button>
 
               {/* Profile Dropdown */}
-              {isProfileOpen && (
+              {token && currentUser && isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
                   <div className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
                     <Link to="/dashboard">View Profile</Link>

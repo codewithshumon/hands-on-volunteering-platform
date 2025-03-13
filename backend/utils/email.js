@@ -17,7 +17,7 @@ const sendVerificationEmail = async (email, verificationCode) => {
     from: process.env.EMAIL_USERNAME,
     to: email,
     subject: "Verify Your Email for HandsOn",
-    text: `Welcome to HandsOn!\n\nVerify Your Email Address\n\nThank you for joining HandsOn! To complete your registration, please use the verification code below:\n\nVerification Code: ${verificationCode}\n\nThis code will expire in 10 minutes. If you didn't request this, please ignore this email.\n\n© 2023 HandsOn. All rights reserved.`,
+    text: `Welcome to HandsOn!\n\nVerify Your Email Address\n\nThank you for joining HandsOn! To complete your registration, please use the verification code below:\n\nVerification Code: ${verificationCode}\n\nThis code will expire in 3 minutes. If you didn't request this, please ignore this email.\n\n© 2023 HandsOn. All rights reserved.`,
     html: `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,7 +47,7 @@ const sendVerificationEmail = async (email, verificationCode) => {
       <div class="verification-code">
         <strong>${verificationCode}</strong>
       </div>
-      <p>This code will expire in 10 minutes. If you didn't request this, please ignore this email.</p>
+      <p>This code will expire in 3 minutes. If you didn't request this, please ignore this email.</p>
     </div>
     <div class="footer">
       <p>&copy; 2023 HandsOn. All rights reserved.</p>

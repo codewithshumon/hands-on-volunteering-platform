@@ -8,7 +8,7 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      dispatch(fetchUserData(token));
+      dispatch(fetchUserData(token)); // Fetch user data if token exists
     }
   }, [dispatch]);
 
