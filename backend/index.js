@@ -6,7 +6,8 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import mongoose from "mongoose";
 
-import authRoute from "./routes/authRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -44,4 +45,5 @@ app.get("/", (req, res) => {
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/api/v1/auth", authRoute);
+app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/user", userRoutes);

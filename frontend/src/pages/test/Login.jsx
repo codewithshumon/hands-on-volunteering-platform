@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import axios from "axios";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../../store/slices/authSlice";
 
 const Login = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
-    email: location.state?.email || "", // Pre-fill email from route state
+    email: location.state?.email || "",
     password: "",
   });
 
@@ -21,12 +25,26 @@ const Login = () => {
         "http://localhost:3000/api/v1/auth/login",
         formData
       );
+      const { token, data: user } = response.data;
+
+      // Dispatch login success action to Redux
+      dispatch(loginSuccess({ token, user }));
+
+      // Store token in localStorage
+      localStorage.setItem("token", token);
+
+      // Show success message
       toast.success("Login successful!");
-      console.log("Token:", response.data.token);
+
+      // Redirect to dashboard or home page
+      navigate("/dashboard");
     } catch (error) {
-      toast.error(error.response.data.message);
+      toast.error(error.response?.data?.message || "Login failed");
     }
   };
+
+  const token = localStorage.getItem("token");
+  console.log("[token]", token);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">

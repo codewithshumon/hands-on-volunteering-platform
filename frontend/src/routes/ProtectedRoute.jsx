@@ -1,14 +1,14 @@
-import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
-import { Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Navigate, Outlet } from "react-router-dom";
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { token, role } = useContext(AuthContext);
+const ProtectedRoute = ({ redirectPath = "/", children }) => {
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
-  const isAllowed = allowedRoles.includes(role);
-  const accessibleRoute =
-    token && isAllowed ? children : <Navigate to="/login" replace={true} />;
-  return accessibleRoute;
+  if (isAuthenticated) {
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  return children ? children : <Outlet />;
 };
 
 export default ProtectedRoute;
