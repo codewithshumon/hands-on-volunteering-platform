@@ -1,30 +1,33 @@
 /* eslint-disable no-unused-vars */
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react"; // Add useEffect
 import axios from "axios";
-import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
+import { motion } from "framer-motion";
 import { useDispatch } from "react-redux";
+import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
+import { toast } from "react-toastify";
+
 import { loginSuccess } from "../../store/slices/authSlice";
 
-const AuthPage = ({ isLogin: propIsLogin }) => {
-  const [isLogin, setIsLogin] = useState(propIsLogin ?? true);
+const AuthPage = ({ isLoginPage }) => {
+  const [isLogin, setIsLogin] = useState(isLoginPage);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     ...(isLogin ? {} : { name: "" }),
   });
-  const [loading, setLoading] = useState(false); // Track loading state
+  const [loading, setLoading] = useState(false);
 
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  // Pre-fill email if coming from signup
-  if (location.state?.email && isLogin) {
-    setFormData((prev) => ({ ...prev, email: location.state.email }));
-  }
+  // Use useEffect to update formData when location.state?.email changes
+  useEffect(() => {
+    if (location.state?.email && isLogin) {
+      setFormData((prev) => ({ ...prev, email: location.state.email }));
+    }
+  }, [location.state?.email, isLogin]); // Add dependencies
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -32,7 +35,7 @@ const AuthPage = ({ isLogin: propIsLogin }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // Start loading
+    setLoading(true);
 
     try {
       if (isLogin) {
@@ -43,13 +46,8 @@ const AuthPage = ({ isLogin: propIsLogin }) => {
         );
         const { token, data: user } = response.data;
 
-        // Dispatch login success action to Redux
         dispatch(loginSuccess({ token, user }));
-
-        // Store token in localStorage
         localStorage.setItem("token", token);
-
-        // Redirect to dashboard or home page
         navigate("/dashboard");
       } else {
         // Signup logic
@@ -58,13 +56,18 @@ const AuthPage = ({ isLogin: propIsLogin }) => {
           formData
         );
 
-        // Redirect to verify-email page with email as state
+        // Store the timer start time in localStorage
+        localStorage.setItem(
+          "emailVerificationTimerStart",
+          Date.now().toString()
+        );
+
         navigate("/verify-email", { state: { email: formData.email } });
       }
     } catch (error) {
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
 
@@ -130,7 +133,7 @@ const AuthPage = ({ isLogin: propIsLogin }) => {
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition flex items-center justify-center"
-            disabled={loading} // Disable button while loading
+            disabled={loading}
           >
             {loading ? (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -141,6 +144,16 @@ const AuthPage = ({ isLogin: propIsLogin }) => {
             )}
           </button>
         </form>
+        {isLogin && (
+          <p className="mt-4 text-gray-600">
+            <button
+              onClick={() => navigate("/verify-password")}
+              className="text-blue-600 font-semibold hover:underline"
+            >
+              Forgot Password?
+            </button>
+          </p>
+        )}
         <p className="mt-4 text-gray-600">
           {isLogin ? "Don't have an account?" : "Already have an account?"}
           <button

@@ -29,6 +29,7 @@ import LogHoursPage from "./pages/impact/LogHourPage";
 import Login from "./pages/test/Login";
 import Signup from "./pages/test/Signup";
 import TestVerifyEmail from "./pages/test/VerifyEmail";
+import VerifyPassword from "./pages/auth/VerifyPassword";
 
 function App() {
   return (
@@ -41,15 +42,24 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/auth" element={<AuthPage />} />
-            <Route path="/login" element={<AuthPage isLogin={true} />} />
-            <Route path="/signup" element={<AuthPage isLogin={false} />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
+            <Route path="/login" element={<AuthPage isLoginPage={true} />} />
+            <Route path="/signup" element={<AuthPage isLoginPage={false} />} />
+            <Route path="/verify-password" element={<VerifyPassword />} />
 
             {/* Protected Routes */}
             <Route
+              path="/verify-email"
+              element={
+                <AuthGuard type="email" url="/login">
+                  <VerifyEmail />
+                </AuthGuard>
+              }
+            />
+
+            <Route
               path="/*"
               element={
-                <AuthGuard type="protected" url="/test/login">
+                <AuthGuard type="protected" url="/login">
                   <Routes>
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/events" element={<EventsPage />} />

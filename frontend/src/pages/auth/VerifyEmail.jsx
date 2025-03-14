@@ -11,9 +11,9 @@ const VerifyEmail = () => {
     code: "",
   });
   const [timer, setTimer] = useState(180); // 3 minutes in seconds
-  const [isResendDisabled, setIsResendDisabled] = useState(true);
-  const [isCodeResent, setIsCodeResent] = useState(false); // Track if code is resent
+  const [showResendButton, setShowResendButton] = useState(false); // Show resend button after timer ends
   const [isResending, setIsResending] = useState(false); // Track if resend is in progress
+  const [error, setError] = useState(""); // State for error messages
 
   // Key for localStorage
   const TIMER_START_KEY = "emailVerificationTimerStart";
@@ -25,45 +25,39 @@ const VerifyEmail = () => {
       const currentTime = Date.now();
       const elapsedTime = Math.floor((currentTime - Number(timerStart)) / 1000); // Elapsed time in seconds
       const remainingTime = Math.max(180 - elapsedTime, 0); // Remaining time in seconds
+
       setTimer(remainingTime);
-      setIsResendDisabled(remainingTime > 0);
-    } else {
-      // If no timer start is found, set the initial timestamp
-      localStorage.setItem(TIMER_START_KEY, Date.now().toString());
+      setShowResendButton(remainingTime <= 0); // Show resend button if timer has ended
+
+      // Start the countdown if there's remaining time
+      if (remainingTime > 0) {
+        const interval = setInterval(() => {
+          setTimer((prevTimer) => {
+            if (prevTimer > 0) {
+              return prevTimer - 1;
+            } else {
+              clearInterval(interval);
+              setShowResendButton(true); // Show resend button when timer reaches 0
+              localStorage.removeItem(TIMER_START_KEY); // Clear the stored timestamp
+              return 0;
+            }
+          });
+        }, 1000);
+
+        return () => clearInterval(interval); // Cleanup interval on unmount
+      }
     }
   }, []);
 
-  // Countdown timer logic
-  useEffect(() => {
-    let interval;
-    if (timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prevTimer) => prevTimer - 1);
-      }, 1000);
-    } else {
-      setIsResendDisabled(false); // Enable resend button when timer reaches 0
-      localStorage.removeItem(TIMER_START_KEY); // Clear the stored timestamp
-    }
-    return () => clearInterval(interval); // Cleanup interval on unmount
-  }, [timer]);
-
-  // Automatically hide the success message after 1 minute
-  useEffect(() => {
-    let timeout;
-    if (isCodeResent) {
-      timeout = setTimeout(() => {
-        setIsCodeResent(false); // Hide the message after 60 seconds
-      }, 60000); // 60 seconds
-    }
-    return () => clearTimeout(timeout); // Cleanup timeout on unmount
-  }, [isCodeResent]);
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(""); // Clear error when user starts typing
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
+
     try {
       const response = await axios.post(
         "http://localhost:3000/api/v1/auth/verify-email",
@@ -71,27 +65,50 @@ const VerifyEmail = () => {
       );
 
       // Redirect to login page with email as state
-      navigate("/test/login", { state: { email: formData.email } });
+      navigate("/login", { state: { email: formData.email } });
     } catch (error) {
-      console.error("Verification failed:", error.response?.data?.message);
+      // Set error message from the API response
+      setError(
+        error.response?.data?.message ||
+          "Verification failed. Please try again."
+      );
     }
   };
 
   const handleResendCode = async () => {
     setIsResending(true); // Start loading
+    setError(""); // Clear previous errors
+
     try {
       const response = await axios.post(
         "http://localhost:3000/api/v1/auth/resend-verification-code",
-        { email: formData.email }
+        { email: formData.email, purpose: "email-verification" }
       );
 
       // Reset the timer to 3 minutes
       setTimer(180);
-      setIsResendDisabled(true);
-      setIsCodeResent(true); // Show the success message
+      setShowResendButton(false); // Hide resend button
       localStorage.setItem(TIMER_START_KEY, Date.now().toString()); // Store new initial timestamp
+
+      // Start the countdown again
+      const interval = setInterval(() => {
+        setTimer((prevTimer) => {
+          if (prevTimer > 0) {
+            return prevTimer - 1;
+          } else {
+            clearInterval(interval);
+            setShowResendButton(true); // Show resend button when timer reaches 0
+            localStorage.removeItem(TIMER_START_KEY); // Clear the stored timestamp
+            return 0;
+          }
+        });
+      }, 1000);
     } catch (error) {
-      console.error("Resend failed:", error.response?.data?.message);
+      // Set error message from the API response
+      setError(
+        error.response?.data?.message ||
+          "Failed to resend code. Please try again."
+      );
     } finally {
       setIsResending(false); // Stop loading
     }
@@ -115,11 +132,6 @@ const VerifyEmail = () => {
               We have sent a verification code to your email address:
             </p>
             <p className="font-semibold text-blue-600">{formData.email}</p>
-            {isCodeResent && (
-              <p className="text-green-600 mt-2">
-                A new code has been sent to your email.
-              </p>
-            )}
           </div>
 
           {/* Verification Code Input */}
@@ -130,10 +142,13 @@ const VerifyEmail = () => {
               name="code"
               value={formData.code}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-lg"
+              className={`w-full px-3 py-2 border rounded-lg ${
+                error ? "border-red-500" : "border-gray-300"
+              }`}
               placeholder="Enter your verification code"
               required
             />
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
 
           {/* Verify Button */}
@@ -147,7 +162,7 @@ const VerifyEmail = () => {
 
         {/* Timer and Resend Code Section */}
         <div className="text-center">
-          {isResendDisabled ? (
+          {!showResendButton ? (
             <p className="text-gray-600">
               Resend code in{" "}
               <span className="font-bold">{formatTime(timer)}</span>

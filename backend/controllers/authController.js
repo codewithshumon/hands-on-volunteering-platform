@@ -80,14 +80,15 @@ export const verifyEmail = async (req, res, next) => {
 
 export const resendVerificationCode = async (req, res, next) => {
   try {
-    const { email } = req.body;
+    const { email, purpose } = req.body; // Add `purpose` to the request body
 
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    if (user.isEmailVerified) {
+    // Check if email is verified (only for email verification, not password reset)
+    if (purpose === "email-verification" && user.isEmailVerified) {
       return res.status(400).json({ message: "Email already verified" });
     }
 
@@ -105,6 +106,7 @@ export const resendVerificationCode = async (req, res, next) => {
       });
     }
 
+    // Generate a new verification code
     const verificationCode = generateVerificationCode();
     user.emailVerificationCode = verificationCode;
     user.emailVerificationCodeExpires = currentTime + 3 * 60 * 1000; // Expires in 3 minutes
@@ -223,4 +225,25 @@ export const restrict = (roles) => async (req, res, next) => {
   }
 
   next();
+};
+
+export const resetPassword = async (req, res, next) => {
+  try {
+    const { email, newPassword } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Invalid email." });
+    }
+
+    // const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      status: "success",
+      message: "Password updated successfully",
+    });
+  } catch (err) {
+    next(err);
+  }
 };
