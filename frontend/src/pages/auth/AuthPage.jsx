@@ -1,11 +1,10 @@
 /* eslint-disable no-unused-vars */
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react"; // Add useEffect
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { useDispatch } from "react-redux";
 import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
-import { toast } from "react-toastify";
 
 import { loginSuccess } from "../../store/slices/authSlice";
 
@@ -17,6 +16,7 @@ const AuthPage = ({ isLoginPage }) => {
     ...(isLogin ? {} : { name: "" }),
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(""); // State for error messages
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -27,27 +27,42 @@ const AuthPage = ({ isLoginPage }) => {
     if (location.state?.email && isLogin) {
       setFormData((prev) => ({ ...prev, email: location.state.email }));
     }
-  }, [location.state?.email, isLogin]); // Add dependencies
+  }, [location.state?.email, isLogin]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    setError(""); // Clear error when user starts typing
+  };
+
+  const isLoginHandler = () => {
+    setIsLogin((prev) => !prev);
+    setError(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError(""); // Clear previous errors
 
     try {
       if (isLogin) {
-        // Login logic
         const response = await axios.post(
           "http://localhost:3000/api/v1/auth/login",
           formData
         );
+
+        // Check if email is not verified
+        if (response.data.status === "error" && response.data.email) {
+          // Redirect to verify email page with the email
+          navigate("/verify-email", { state: { email: response.data.email } });
+          return;
+        }
+
         const { token, data: user } = response.data;
 
         dispatch(loginSuccess({ token, user }));
         localStorage.setItem("token", token);
+
         navigate("/dashboard");
       } else {
         // Signup logic
@@ -55,6 +70,14 @@ const AuthPage = ({ isLoginPage }) => {
           "http://localhost:3000/api/v1/auth/signup",
           formData
         );
+
+        // Check if email is not verified
+        if (response.data.status === "error" && response.data.email) {
+          // Redirect to verify email page with the email
+          navigate("/verify-email", { state: { email: response.data.email } });
+
+          return;
+        }
 
         // Store the timer start time in localStorage
         localStorage.setItem(
@@ -65,7 +88,23 @@ const AuthPage = ({ isLoginPage }) => {
         navigate("/verify-email", { state: { email: formData.email } });
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Something went wrong");
+      // Handle 401 Unauthorized response
+      if (error.response?.status === 401 && error.response?.data?.email) {
+        // Redirect to verify email page with the email
+        navigate("/verify-email", {
+          state: { email: error.response.data.email },
+        });
+
+        // Store the timer start time in localStorage
+        localStorage.setItem(
+          "emailVerificationTimerStart",
+          Date.now().toString()
+        );
+        return;
+      }
+
+      // Handle other errors
+      setError(error.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -83,6 +122,11 @@ const AuthPage = ({ isLoginPage }) => {
           {isLogin ? "Login" : "Sign Up"}
         </h2>
         <form onSubmit={handleSubmit} className="mt-4">
+          {/* Error and Success Messages */}
+          {error && (
+            <p className="text-red-500 text-sm mb-4 text-center">{error}</p>
+          )}
+
           {!isLogin && (
             <div className="mb-4">
               <label className="block text-gray-700">Name</label>
@@ -157,7 +201,7 @@ const AuthPage = ({ isLoginPage }) => {
         <p className="mt-4 text-gray-600">
           {isLogin ? "Don't have an account?" : "Already have an account?"}
           <button
-            onClick={() => setIsLogin((prev) => !prev)}
+            onClick={isLoginHandler}
             className="text-blue-600 font-semibold ml-2 hover:underline"
           >
             {isLogin ? "Sign up" : "Login"}

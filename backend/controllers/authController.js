@@ -15,20 +15,41 @@ export const signup = async (req, res, next) => {
     // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "Email already registered" });
+      if (!existingUser.isEmailVerified) {
+        // Generate a new verification code
+        const verificationCode = generateVerificationCode();
+        const verificationCodeExpiry = Date.now() + 3 * 60 * 1000; // 3 minutes
+
+        // Update user with new verification code and expiry
+        existingUser.emailVerificationCode = verificationCode;
+        existingUser.emailVerificationCodeExpires = verificationCodeExpiry;
+        await existingUser.save();
+
+        // Send new verification code via email
+        await sendVerificationEmail(email, verificationCode);
+
+        return res.status(401).json({
+          status: "error",
+          message:
+            "Email already registered but not verified. A new verification code has been sent.",
+          email,
+        });
+      } else {
+        return res.status(401).json({ message: "Email already registered" });
+      }
     }
 
     // Generate verification code
     const verificationCode = generateVerificationCode();
-    const verificationCodeExpiry = Date.now() + 3 * 60 * 1000; // 10 minutes
+    const verificationCodeExpiry = Date.now() + 3 * 60 * 1000; // 3 minutes
 
     // Create new user
     const user = await User.create({
       name,
       email,
       password,
-      emailVerificationCode: verificationCode, // Save to the correct field
-      emailVerificationCodeExpires: verificationCodeExpiry, // Save to the correct field
+      emailVerificationCode: verificationCode,
+      emailVerificationCodeExpires: verificationCodeExpiry,
     });
 
     console.log("[verificationCode]", verificationCode);
@@ -137,9 +158,24 @@ export const login = async (req, res, next) => {
 
     // Check if email is verified
     if (!user.isEmailVerified) {
-      return res
-        .status(401)
-        .json({ message: "Please verify your email first" });
+      // Generate a new verification code
+      const verificationCode = generateVerificationCode();
+      const verificationCodeExpiry = Date.now() + 3 * 60 * 1000; // 3 minutes
+
+      // Update user with new verification code and expiry
+      user.emailVerificationCode = verificationCode;
+      user.emailVerificationCodeExpires = verificationCodeExpiry;
+      await user.save();
+
+      // Send new verification code via email
+      await sendVerificationEmail(email, verificationCode);
+
+      return res.status(401).json({
+        status: "error",
+        message:
+          "Email verification required. A new verification code has been sent.",
+        email,
+      });
     }
 
     // Generate JWT token

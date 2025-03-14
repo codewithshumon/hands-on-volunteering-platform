@@ -19,11 +19,11 @@ const AuthGuard = ({ children, type, url }) => {
     return <Navigate to={url} />;
   }
 
-  if (type === "protected" && !token) {
+  if (type === "non-user" && !token) {
     return <Navigate to={url} />;
   }
 
-  if (type === "redirect" && token) {
+  if (type === "test" && token) {
     return <Navigate to={url} />;
   }
 

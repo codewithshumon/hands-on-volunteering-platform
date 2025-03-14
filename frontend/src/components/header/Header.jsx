@@ -1,7 +1,8 @@
-import { useState } from "react";
-import { useSelector } from "react-redux";
+import { useState, useEffect, useRef } from "react"; // Add useRef
+import { useSelector, useDispatch } from "react-redux";
 import { FaHandsHelping, FaBell, FaUserCircle, FaSearch } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { logout } from "../../store/slices/authSlice";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -9,6 +10,43 @@ const Header = () => {
 
   const token = useSelector((state) => state.auth.token);
   const currentUser = useSelector((state) => state.auth.user);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  // Ref for the profile dropdown
+  const profileDropdownRef = useRef(null);
+
+  // Handle logout
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        profileDropdownRef.current &&
+        !profileDropdownRef.current.contains(event.target)
+      ) {
+        setIsProfileOpen(false); // Close the dropdown
+      }
+    };
+
+    // Attach the event listener
+    document.addEventListener("mousedown", handleClickOutside);
+
+    // Cleanup the event listener
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Close dropdown when clicking any button inside it
+  const handleDropdownClick = () => {
+    setIsProfileOpen(false);
+  };
 
   return (
     <header className="bg-white shadow-sm fixed w-full top-0 z-50">
@@ -39,11 +77,6 @@ const Header = () => {
 
           {/* Right Section - Search and User Controls */}
           <div className="flex items-center space-x-4">
-            {/* Search Icon - Mobile */}
-            {/* <button className="md:hidden text-gray-600 hover:text-blue-600">
-              <FaSearch className="h-5 w-5" />
-            </button> */}
-
             {/* Desktop Search */}
             {token && currentUser && (
               <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2">
@@ -67,7 +100,7 @@ const Header = () => {
             )}
 
             {/* User Profile */}
-            <div className="relative">
+            <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center text-gray-700 hover:text-blue-600"
@@ -93,10 +126,19 @@ const Header = () => {
               {/* Profile Dropdown */}
               {token && currentUser && isProfileOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
-                  <div className="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <div
+                    className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                    onClick={handleDropdownClick} // Close dropdown on click
+                  >
                     <Link to="/dashboard">View Profile</Link>
                   </div>
-                  <button className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                  <button
+                    onClick={() => {
+                      handleLogout(); // Handle logout
+                      handleDropdownClick(); // Close dropdown
+                    }}
+                    className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 cursor-pointer"
+                  >
                     Logout
                   </button>
                 </div>

@@ -14,6 +14,7 @@ const VerifyEmail = () => {
   const [showResendButton, setShowResendButton] = useState(false); // Show resend button after timer ends
   const [isResending, setIsResending] = useState(false); // Track if resend is in progress
   const [error, setError] = useState(""); // State for error messages
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false); // State for success message
 
   // Key for localStorage
   const TIMER_START_KEY = "emailVerificationTimerStart";
@@ -90,6 +91,9 @@ const VerifyEmail = () => {
       setShowResendButton(false); // Hide resend button
       localStorage.setItem(TIMER_START_KEY, Date.now().toString()); // Store new initial timestamp
 
+      // Show success message
+      setShowSuccessMessage(true);
+
       // Start the countdown again
       const interval = setInterval(() => {
         setTimer((prevTimer) => {
@@ -121,6 +125,17 @@ const VerifyEmail = () => {
     return `${minutes}:${seconds < 10 ? `0${seconds}` : seconds}`;
   };
 
+  // Automatically hide the success message after 1 minute
+  useEffect(() => {
+    if (showSuccessMessage) {
+      const timeout = setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 60000); // 1 minute in milliseconds
+
+      return () => clearTimeout(timeout); // Cleanup timeout on unmount
+    }
+  }, [showSuccessMessage]);
+
   return (
     <div className="min-h-screen h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 rounded-lg shadow-md w-96">
@@ -133,6 +148,13 @@ const VerifyEmail = () => {
             </p>
             <p className="font-semibold text-blue-600">{formData.email}</p>
           </div>
+
+          {/* Success Message */}
+          {showSuccessMessage && (
+            <p className="text-green-600 my-2">
+              A new code has been sent to your email.
+            </p>
+          )}
 
           {/* Verification Code Input */}
           <div className="mb-4">

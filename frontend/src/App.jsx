@@ -41,10 +41,40 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/login" element={<AuthPage isLoginPage={true} />} />
-            <Route path="/signup" element={<AuthPage isLoginPage={false} />} />
-            <Route path="/verify-password" element={<VerifyPassword />} />
+
+            {/* user Routes */}
+            <Route
+              path="/auth"
+              element={
+                <AuthGuard type="user" url="/dashboard">
+                  <AuthPage />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/login"
+              element={
+                <AuthGuard type="user" url="/dashboard">
+                  <AuthPage isLoginPage={true} />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/signup"
+              element={
+                <AuthGuard type="user" url="/dashboard">
+                  <AuthPage isLoginPage={false} />
+                </AuthGuard>
+              }
+            />
+            <Route
+              path="/verify-password"
+              element={
+                <AuthGuard type="user" url="/dashboard">
+                  <VerifyPassword />
+                </AuthGuard>
+              }
+            />
 
             {/* Protected Routes */}
             <Route
@@ -59,7 +89,7 @@ function App() {
             <Route
               path="/*"
               element={
-                <AuthGuard type="protected" url="/login">
+                <AuthGuard type="non-user" url="/login">
                   <Routes>
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/events" element={<EventsPage />} />
@@ -83,7 +113,7 @@ function App() {
             <Route
               path="/test/*"
               element={
-                <AuthGuard type="redirect" url="/dashboard">
+                <AuthGuard type="test" url="/dashboard">
                   <Routes>
                     <Route path="login" element={<Login />} />
                     <Route path="signup" element={<Signup />} />
