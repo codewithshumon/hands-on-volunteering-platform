@@ -21,6 +21,7 @@ const EventsPage = () => {
   ]);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEventCardModal, setShowEventCardModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
@@ -28,9 +29,7 @@ const EventsPage = () => {
     date: "",
   });
 
-  const closeCreateModal = () => {
-    setShowCreateModal(false);
-  };
+  console.log("[showCreateModal]", showCreateModal);
 
   const handleCreateEvent = (formData) => {
     const newEvent = {
@@ -44,11 +43,8 @@ const EventsPage = () => {
     setShowCreateModal(false);
   };
 
-  console.log("[selectedEvent]", selectedEvent);
-  console.log("[showCreateModal]", showCreateModal);
-
   return (
-    <div className="max-w-7xl mx-auto p-6 pt-16">
+    <div className="max-w-7xl mx-auto p-6 pt-22">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <h1 className="text-3xl font-bold mb-4 md:mb-0">
           Volunteer Opportunities
@@ -101,13 +97,17 @@ const EventsPage = () => {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {events.map((event) => (
-          <EventCard key={event.id} event={event} onSelect={setSelectedEvent} />
+          <EventCard
+            key={event.id}
+            event={event}
+            onSelect={setSelectedEvent}
+            modalClose={setShowEventCardModal}
+          />
         ))}
       </div>
 
       {/* Modal for Creating Events */}
-
-      <Modal isOpen={showCreateModal} closeModal={closeCreateModal}>
+      <Modal isOpen={showCreateModal} setCloseModalHandler={setShowCreateModal}>
         <EventCreationForm
           onSubmit={handleCreateEvent}
           onCancel={() => setShowCreateModal(false)}
@@ -115,8 +115,11 @@ const EventsPage = () => {
       </Modal>
 
       {/* Event Details Modal */}
-      {selectedEvent && (
-        <Modal isOpen={selectedEvent && true} closeModal={closeCreateModal}>
+      {selectedEvent && showEventCardModal && (
+        <Modal
+          isOpen={selectedEvent && true}
+          setCloseModalHandler={setShowEventCardModal}
+        >
           <div className="p-4">
             <div className="bg-white rounded-xl p-6 w-full max-w-2xl">
               <div className="flex justify-between items-start mb-6">

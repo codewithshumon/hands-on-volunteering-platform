@@ -40,9 +40,9 @@ const Header = () => {
           {/* Right Section - Search and User Controls */}
           <div className="flex items-center space-x-4">
             {/* Search Icon - Mobile */}
-            <button className="md:hidden text-gray-600 hover:text-blue-600">
+            {/* <button className="md:hidden text-gray-600 hover:text-blue-600">
               <FaSearch className="h-5 w-5" />
-            </button>
+            </button> */}
 
             {/* Desktop Search */}
             {token && currentUser && (
