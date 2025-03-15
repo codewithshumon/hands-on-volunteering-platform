@@ -18,11 +18,18 @@ const VerifyEmail = () => {
 
   // Key for localStorage
   const TIMER_START_KEY = "emailVerificationTimerStart";
+  const TIMER_EXPIRED_KEY = "emailVerificationTimerExpired";
 
   // Calculate remaining time on component mount
   useEffect(() => {
     const timerStart = localStorage.getItem(TIMER_START_KEY);
-    if (timerStart) {
+    const timerExpired = localStorage.getItem(TIMER_EXPIRED_KEY);
+
+    if (timerExpired === "true") {
+      // If the timer has already expired, show the resend button immediately
+      setShowResendButton(true);
+      setTimer(0);
+    } else if (timerStart) {
       const currentTime = Date.now();
       const elapsedTime = Math.floor((currentTime - Number(timerStart)) / 1000); // Elapsed time in seconds
       const remainingTime = Math.max(180 - elapsedTime, 0); // Remaining time in seconds
@@ -40,6 +47,7 @@ const VerifyEmail = () => {
               clearInterval(interval);
               setShowResendButton(true); // Show resend button when timer reaches 0
               localStorage.removeItem(TIMER_START_KEY); // Clear the stored timestamp
+              localStorage.setItem(TIMER_EXPIRED_KEY, "true"); // Mark timer as expired
               return 0;
             }
           });
@@ -90,6 +98,7 @@ const VerifyEmail = () => {
       setTimer(180);
       setShowResendButton(false); // Hide resend button
       localStorage.setItem(TIMER_START_KEY, Date.now().toString()); // Store new initial timestamp
+      localStorage.removeItem(TIMER_EXPIRED_KEY); // Clear the expired flag
 
       // Show success message
       setShowSuccessMessage(true);
@@ -103,6 +112,7 @@ const VerifyEmail = () => {
             clearInterval(interval);
             setShowResendButton(true); // Show resend button when timer reaches 0
             localStorage.removeItem(TIMER_START_KEY); // Clear the stored timestamp
+            localStorage.setItem(TIMER_EXPIRED_KEY, "true"); // Mark timer as expired
             return 0;
           }
         });
