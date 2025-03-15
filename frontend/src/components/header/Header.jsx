@@ -108,9 +108,13 @@ const Header = () => {
                 {token && currentUser ? (
                   <div>
                     {currentUser.profileImage ? (
-                      <div></div>
+                      <img
+                        src={currentUser.profileImage} // Use the profileImage URL
+                        alt="Profile" // Add an alt text for accessibility
+                        className="h-7 w-7 rounded-full" // Add styling (e.g., rounded-full for a circular image)
+                      />
                     ) : (
-                      <FaUserCircle className="h-7 w-7" />
+                      <FaUserCircle className="h-7 w-7" /> // Fallback icon
                     )}
                   </div>
                 ) : (

@@ -197,8 +197,9 @@ export const login = async (req, res, next) => {
 };
 
 // middleware/verifyToken.js
+
 const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
     return res.status(401).json({ message: "No token provided" });
@@ -206,7 +207,7 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // Attach the decoded user ID to the request object
+    req.user = decoded;
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });
@@ -214,35 +215,6 @@ const verifyToken = (req, res, next) => {
 };
 
 export default verifyToken;
-
-// export const authenticate = async (req, res, next) => {
-//   //get token from headers
-//   const authToken = req.headers.authorization;
-
-//   if (!authToken || !authToken.startsWith("Bearer ")) {
-//     //if we do not use return here. get error Cannot set headers after they are sent
-//     return res
-//       .status(401)
-//       .json({ success: false, message: "Authorization denied" });
-//   }
-
-//   try {
-//     const token = authToken.split(" ")[1];
-
-//     //verify token
-//     const decoded = Jwt.verify(token, process.env.JWT_SECRET_KEY);
-
-//     req.userId = decoded.id;
-
-//     next();
-//   } catch (error) {
-//     if (error.name === "TokenExpiredError") {
-//       return res.status(401).json({ message: "Token is expired" });
-//     }
-
-//     return res.status(401).json({ success: false, message: "Invalid token" });
-//   }
-// };
 
 export const restrict = (roles) => async (req, res, next) => {
   const userId = req.userId;

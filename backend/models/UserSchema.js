@@ -20,7 +20,11 @@ const UserSchema = new mongoose.Schema({
   },
   profileImage: {
     type: String,
-    default: null,
+    default: function () {
+      // Generate default avatar URL based on the user's name
+      const username = this.name.split(" ")[0]; // Use the first name for the avatar
+      return `https://avatar.iran.liara.run/username?username=${username}&bold=false&length=1`;
+    },
   },
   skills: {
     type: [String],

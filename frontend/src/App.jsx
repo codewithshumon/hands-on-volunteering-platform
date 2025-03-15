@@ -14,7 +14,7 @@ import AuthPage from "./pages/auth/AuthPage";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 
 import Home from "./pages/Home";
-import Dashboard from "./pages/profile/Dashboard";
+import Dashboard from "./pages/dashboard/Dashboard";
 import EventsPage from "./pages/events/EventsPage";
 import { CommunityHelpPage } from "./pages/community/CommunityHelpPage";
 

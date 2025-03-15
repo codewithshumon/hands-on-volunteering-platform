@@ -1,6 +1,6 @@
 import User from "../models/UserSchema.js";
 
-export const getUserData = async (req, res) => {
+export const getSingleUser = async (req, res) => {
   try {
     // req.user is set by the verifyToken middleware
     const user = await User.findById(req.user.id).select("-password");
