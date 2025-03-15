@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import { FaUser, FaHeart, FaEdit, FaSave, FaTimes } from "react-icons/fa";
 
@@ -5,10 +6,6 @@ import useFetchData from "../../hooks/useFetchData";
 
 const Profile = () => {
   const { user, loading, error } = useFetchData("/user/single-user", "GET");
-
-  console.log("user", user);
-  console.log("loading", loading);
-  console.log("error", error);
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(user?.name || "");
@@ -38,8 +35,6 @@ const Profile = () => {
       causes: causes.split(",").map((cause) => cause.trim()),
     };
     setIsEditing(false);
-    console.log("Updated User:", updatedUser);
-    // You can now send `updatedUser` to your backend to save the changes
   };
 
   const handleCancelClick = () => {
@@ -61,8 +56,6 @@ const Profile = () => {
       reader.readAsDataURL(file);
     }
   };
-
-  console.log("[user profile]", user);
 
   return (
     <div className="md:col-span-1 bg-[#faf9f9] rounded-xl shadow-md p-6 h-fit relative">

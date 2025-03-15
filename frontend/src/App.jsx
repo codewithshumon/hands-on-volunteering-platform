@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 import { Provider } from "react-redux";
 import store from "./store/store";
+import TokenExpirationChecker from "./components/global/TokenExpirationChecker";
 
 import PageNotFound from "./pages/PageNotFound";
 import Header from "./components/header/Header";
@@ -36,6 +37,7 @@ function App() {
     <>
       <Provider store={store}>
         <BrowserRouter>
+          <TokenExpirationChecker />
           <Header />
           <ToastContainer />
           <Routes>

@@ -5,6 +5,7 @@ import axios from "axios";
 import { motion } from "framer-motion";
 import { useDispatch } from "react-redux";
 import { FaUser, FaLock, FaEnvelope } from "react-icons/fa";
+import { jwtDecode } from "jwt-decode";
 
 import { loginSuccess } from "../../store/slices/authSlice";
 
@@ -58,10 +59,19 @@ const AuthPage = ({ isLoginPage }) => {
           return;
         }
 
+        console.log("[response.data]", response.data);
+
         const { token, data: user } = response.data;
 
         dispatch(loginSuccess({ token, user }));
+
+        // Decode the JWT token to get the expiration time
+        const decodedToken = jwtDecode(token);
+        const expirationTime = decodedToken.exp * 1000;
+
+        // Store the token and expiration time in localStorage
         localStorage.setItem("token", token);
+        localStorage.setItem("tokenExpiration", expirationTime.toString());
 
         navigate("/dashboard");
       } else {

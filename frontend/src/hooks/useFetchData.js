@@ -36,18 +36,14 @@ const useFetchData = (
         ...stableOptions, // Use memoized options
       });
 
-      console.log("[response]", response);
-
       if (!response.ok) {
         throw new Error("Failed to fetch user data");
       }
 
       const data = await response.json();
-      console.log("[data]", data);
 
       setUser(data.data);
     } catch (err) {
-      console.log("[err]", err);
       setError(err.message);
     } finally {
       setLoading(false);
