@@ -1,56 +1,64 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect, useMemo } from "react";
 
-// Create an Axios instance with the base URL from the environment variable
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
-});
-
-const useFetchData = (endpoint, options = {}) => {
-  const [data, setData] = useState(null);
+const useFetchData = (
+  endpoint,
+  method = "GET",
+  customHeaders = {},
+  options = {}
+) => {
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+
+  const token = localStorage.getItem("token");
+  const baseURL = import.meta.env.VITE_API_BASE_URL;
+
+  // Memoize customHeaders and options to prevent unnecessary re-renders
+  const stableCustomHeaders = useMemo(
+    () => customHeaders,
+    [JSON.stringify(customHeaders)]
+  );
+  const stableOptions = useMemo(() => options, [JSON.stringify(options)]);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await fetch(`${baseURL + endpoint}`, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+          ...stableCustomHeaders, // Use memoized customHeaders
+        },
+        ...stableOptions, // Use memoized options
+      });
+
+      console.log("[response]", response);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+
+      const data = await response.json();
+      console.log("[data]", data);
+
+      setUser(data.data);
+    } catch (err) {
+      console.log("[err]", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    console.log("[useFetchData useEffect] Running...");
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        setSuccess(false);
+    fetchUserData();
+  }, [endpoint, method, stableCustomHeaders, stableOptions]);
 
-        const token = localStorage.getItem("token");
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        const config = {
-          ...options,
-          headers: {
-            ...options.headers,
-            ...headers,
-          },
-        };
-
-        const response = await api(endpoint, config);
-
-        if (response.status >= 200 && response.status < 300) {
-          setData(response.data);
-          setSuccess(true);
-        } else {
-          throw new Error(`Request failed with status ${response.status}`);
-        }
-      } catch (err) {
-        setError(err.message || "An error occurred");
-        setSuccess(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [endpoint, options]);
-
-  return { data, loading, error, success };
+  return { user, loading, error };
 };
 
 export default useFetchData;
