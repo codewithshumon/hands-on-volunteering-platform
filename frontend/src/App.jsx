@@ -94,9 +94,15 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/community" element={<CommunityHelpPage />} />
-                    <Route path="/team" element={<TeamPage />} />
-                    <Route path="/teams" element={<TeamsLeaderboardPage />} />
-                    <Route path="/team/:teamId" element={<TeamDetailsPage />} />
+                    <Route path="/teams" element={<TeamPage />} />
+                    <Route
+                      path="/teams/loader-page"
+                      element={<TeamsLeaderboardPage />}
+                    />
+                    <Route
+                      path="/teams/:teamId"
+                      element={<TeamDetailsPage />}
+                    />
                     <Route path="/impact" element={<ImpactDashboard />} />
                     <Route
                       path="/impact/leader-board"

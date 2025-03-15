@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaHistory, FaCalendar, FaSearch } from "react-icons/fa";
 import Profile from "../../components/dashboard/Profile";
 import UpcomingEvents from "../../components/dashboard/UpcomingEvents";
@@ -9,17 +9,42 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("history");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:3000/api/v1/user/single-user",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch user data");
+        }
+
+        const data = await response.json();
+        setUser(data.data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   // Mock data
-  const user = {
-    name: "John Doe",
-    email: "john@handsOn.com",
-    avatar: "https://via.placeholder.com/150",
-    skills: ["Teaching", "Construction", "Medical"],
-    causes: ["Education", "Homelessness", "Environment"],
-    hoursVolunteered: 42,
-  };
-
   const volunteerHistory = [
     { id: 1, title: "Food Distribution", date: "2023-03-15", hours: 4 },
     { id: 2, title: "Beach Cleanup", date: "2023-02-28", hours: 6 },
@@ -55,16 +80,19 @@ const Dashboard = () => {
     },
   ];
 
-  const handleEditProfile = () => {
-    // Add logic to handle profile editing
-    console.log("Edit profile clicked");
-  };
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
         {/* Left Side - User Profile */}
-        <Profile user={user} onEdit={handleEditProfile} />
+        {user && <Profile user={user} />}
 
         {/* Right Side - Content */}
         <div className="md:col-span-2">
