@@ -4,10 +4,11 @@ import { useState, useEffect, useMemo } from "react";
 const useFetchData = (
   endpoint,
   method = "GET",
+  body = null, // Add body parameter for POST/PUT/PATCH requests
   customHeaders = {},
   options = {}
 ) => {
-  const [user, setUser] = useState(null);
+  const [resData, setResData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,12 +22,12 @@ const useFetchData = (
   );
   const stableOptions = useMemo(() => options, [JSON.stringify(options)]);
 
-  const fetchUserData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch(`${baseURL + endpoint}`, {
+      const requestOptions = {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -34,15 +35,21 @@ const useFetchData = (
           ...stableCustomHeaders, // Use memoized customHeaders
         },
         ...stableOptions, // Use memoized options
-      });
+      };
+
+      // Add body to request options if method is POST, PUT, or PATCH
+      if (body && ["POST", "PUT", "PATCH"].includes(method.toUpperCase())) {
+        requestOptions.body = JSON.stringify(body);
+      }
+
+      const response = await fetch(`${baseURL + endpoint}`, requestOptions);
 
       if (!response.ok) {
-        throw new Error("Failed to fetch user data");
+        throw new Error("Failed to fetch/update data");
       }
 
       const data = await response.json();
-
-      setUser(data.data);
+      setResData(data.data);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -51,10 +58,14 @@ const useFetchData = (
   };
 
   useEffect(() => {
-    fetchUserData();
+    // Automatically fetch data only for GET requests
+    if (method.toUpperCase() === "GET") {
+      fetchData();
+    }
   }, [endpoint, method, stableCustomHeaders, stableOptions]);
 
-  return { user, loading, error };
+  // Return fetchData function for manual triggering (e.g., for POST/PUT/PATCH/DELETE)
+  return { resData, loading, error, fetchData };
 };
 
 export default useFetchData;
