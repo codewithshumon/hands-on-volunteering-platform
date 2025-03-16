@@ -1,17 +1,31 @@
-/* eslint-disable no-unused-vars */
-import { useState } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect } from "react";
 import { FaUser, FaHeart, FaEdit, FaSave, FaTimes } from "react-icons/fa";
-
-import useFetchData from "../../hooks/useFetchData";
+import useApi from "../../hooks/useApi";
 
 const Profile = () => {
-  const { user, loading, error } = useFetchData("/user/single-user", "GET");
+  const { resData: user, loading, error, fetchData, updateData } = useApi();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.name || "");
-  const [profileImage, setProfileImage] = useState(user?.profileImage || "");
-  const [skills, setSkills] = useState(user?.skills?.join(", ") || "");
-  const [causes, setCauses] = useState(user?.causes?.join(", ") || "");
+  const [name, setName] = useState("");
+  const [profileImage, setProfileImage] = useState("");
+  const [skills, setSkills] = useState("");
+  const [causes, setCauses] = useState("");
+
+  // Fetch user data on component mount
+  useEffect(() => {
+    fetchData("/user/single-user");
+  }, []);
+
+  // Update local state when user data is fetched
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setProfileImage(user.profileImage || "");
+      setSkills(user.skills?.join(", ") || "");
+      setCauses(user.causes?.join(", ") || "");
+    }
+  }, [user]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -25,8 +39,8 @@ const Profile = () => {
     setIsEditing(true);
   };
 
-  const handleSaveClick = () => {
-    // Save changes and exit edit mode
+  const handleSaveClick = async () => {
+    // Prepare the updated user data
     const updatedUser = {
       ...user,
       name,
@@ -34,7 +48,14 @@ const Profile = () => {
       skills: skills.split(",").map((skill) => skill.trim()),
       causes: causes.split(",").map((cause) => cause.trim()),
     };
-    setIsEditing(false);
+
+    // Call the updateData function from useApi to update the user data
+    try {
+      await updateData("/user/single-user", "PUT", updatedUser);
+      setIsEditing(false);
+    } catch (err) {
+      console.error("Failed to update user:", err);
+    }
   };
 
   const handleCancelClick = () => {
@@ -95,7 +116,7 @@ const Profile = () => {
       <div className="text-center mb-6">
         <div className="relative w-32 h-32 mx-auto mb-4">
           <img
-            src={user?.profileImage || "https://via.placeholder.com/150"}
+            src={profileImage || "https://placehold.co/400"}
             alt="Profile"
             className="w-32 h-32 rounded-full object-cover"
           />
@@ -119,12 +140,12 @@ const Profile = () => {
         {isEditing ? (
           <input
             type="text"
-            value={user?.name}
+            value={name}
             onChange={(e) => setName(e.target.value)}
             className="text-xl font-bold mb-2 text-center border border-gray-300 rounded-lg p-2"
           />
         ) : (
-          <h2 className="text-xl font-bold mb-2">{user?.name}</h2>
+          <h2 className="text-xl font-bold mb-2">{name}</h2>
         )}
 
         <div className="bg-blue-100 rounded-lg p-3">
@@ -143,19 +164,19 @@ const Profile = () => {
           {isEditing ? (
             <input
               type="text"
-              value={user?.skills}
+              value={skills}
               onChange={(e) => setSkills(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2"
               placeholder="Enter skills, separated by commas"
             />
           ) : (
             <div className="flex flex-wrap gap-2">
-              {user?.skills?.map((skill, index) => (
+              {skills.split(",").map((skill, index) => (
                 <span
                   key={index}
                   className="bg-gray-100 px-3 py-1 rounded-full text-sm"
                 >
-                  {skill}
+                  {skill.trim()}
                 </span>
               ))}
             </div>
@@ -170,19 +191,19 @@ const Profile = () => {
           {isEditing ? (
             <input
               type="text"
-              value={user?.causes}
+              value={causes}
               onChange={(e) => setCauses(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2"
               placeholder="Enter causes, separated by commas"
             />
           ) : (
             <div className="flex flex-wrap gap-2">
-              {user?.causes?.map((cause, index) => (
+              {causes.split(",").map((cause, index) => (
                 <span
                   key={index}
                   className="bg-red-100 px-3 py-1 rounded-full text-sm"
                 >
-                  {cause}
+                  {cause.trim()}
                 </span>
               ))}
             </div>

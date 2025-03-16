@@ -1,108 +1,109 @@
-import { useState, useRef, useMemo } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useRef, useMemo, useCallback } from "react";
 
 const useApi = () => {
   const [resData, setResData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [headers, setHeaders] = useState(null);
+  const [options, setOptions] = useState(null);
   const abortControllerRef = useRef(null); // For request cancellation
 
   const token = localStorage.getItem("token");
   const baseURL = import.meta.env.VITE_API_BASE_URL;
 
+  const stableCustomHeaders = useMemo(() => headers, [JSON.stringify(headers)]);
+  const stableOptions = useMemo(() => options, [JSON.stringify(options)]);
+
+  console.log("[stableCustomHeaders]", stableCustomHeaders);
+  console.log("[stableOptions]", stableOptions);
+
   // Function to make API requests
-  const makeRequest = async (
-    endpoint,
-    method = "GET",
-    body = {}, // Renamed from `data` to `body`
-    customHeaders = {},
-    options = {}
-  ) => {
-    // Abort any ongoing request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create a new AbortController for the current request
-    abortControllerRef.current = new AbortController();
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      // Stabilize customHeaders and options using useMemo
-      const stableCustomHeaders = useMemo(
-        () => customHeaders,
-        [JSON.stringify(customHeaders)]
-      );
-      const stableOptions = useMemo(() => options, [JSON.stringify(options)]);
-
-      const requestOptions = {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-          ...stableCustomHeaders, // Use stabilized custom headers
-        },
-        signal: abortControllerRef.current.signal, // Add abort signal
-        ...stableOptions, // Use stabilized options
-      };
-
-      // Add body to request options if method is POST, PUT, or PATCH
-      if (["POST", "PUT", "PATCH"].includes(method.toUpperCase())) {
-        requestOptions.body = JSON.stringify(body);
+  const makeRequest = useCallback(
+    async (
+      endpoint,
+      method = "GET",
+      body = {},
+      customHeaders = {},
+      options = {}
+    ) => {
+      // Abort any ongoing request
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
       }
 
-      const response = await fetch(`${baseURL + endpoint}`, requestOptions);
+      // Create a new AbortController for the current request
+      abortControllerRef.current = new AbortController();
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
+      setLoading(true);
+      setError(null);
 
-      const result = await response.json();
-      setResData(result.data);
+      try {
+        // Stabilize customHeaders and options using useMemo
+        setHeaders(customHeaders);
+        setOptions(options);
 
-      // Call the success callback if provided
-      if (options.onSuccess) {
-        options.onSuccess(result);
-      }
+        const requestOptions = {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            ...stableCustomHeaders, // Use stabilized custom headers
+          },
+          signal: abortControllerRef.current.signal, // Add abort signal
+          ...stableOptions, // Use stabilized options
+        };
 
-      return result; // Return the response data
-    } catch (err) {
-      if (err.name !== "AbortError") {
-        setError(err.message || "Something went wrong!");
-        // Call the error callback if provided
-        if (options.onError) {
-          options.onError(err);
+        // Add body to request options if method is POST, PUT, or PATCH
+        if (["POST", "PUT", "PATCH"].includes(method.toUpperCase())) {
+          requestOptions.body = JSON.stringify(body);
         }
+
+        const response = await fetch(`${baseURL + endpoint}`, requestOptions);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        setResData(result.data);
+
+        return result; // Return the response data
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          setError(err.message || "Something went wrong!");
+        }
+        throw err; // Re-throw the error for the caller to handle
+      } finally {
+        setLoading(false);
+        abortControllerRef.current = null; //
       }
-      throw err; // Re-throw the error for the caller to handle
-    } finally {
-      setLoading(false);
-      abortControllerRef.current = null; // Reset the AbortController
-    }
-  };
+    },
+    [stableCustomHeaders, stableOptions, token, baseURL]
+  );
 
   // Function to cancel the ongoing request
-  const cancelRequest = () => {
+  const cancelRequest = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
-  };
+  }, []);
 
-  // Automatically fetch data for GET requests
-  const fetchData = async (endpoint, customHeaders = {}, options = {}) => {
-    return makeRequest(endpoint, "GET", null, customHeaders, options);
-  };
+  // Function to fetch data (GET requests)
+  const fetchData = useCallback(
+    async (endpoint, customHeaders = {}, options = {}) => {
+      return makeRequest(endpoint, "GET", null, customHeaders, options);
+    },
+    [makeRequest]
+  );
 
   // Function to update data (POST, PUT, PATCH, DELETE)
-  const updateData = async (
-    endpoint,
-    method = "PUT",
-    body = {},
-    options = {}
-  ) => {
-    return makeRequest(endpoint, method, body, {}, options);
-  };
+  const updateData = useCallback(
+    async (endpoint, method = "PUT", body = {}, options = {}) => {
+      return makeRequest(endpoint, method, body, {}, options);
+    },
+    [makeRequest]
+  );
 
   return {
     resData, // Response data from the API
