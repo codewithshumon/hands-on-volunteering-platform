@@ -22,15 +22,15 @@ export const getSingleUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
-    const userId = req.user.id; // Assuming req.user is set by the verifyToken middleware
-    const { name, profileImage, skills, causes } = req.body;
+    const userId = req.user.id;
+    const profileImageUrl = req.profileImageUrl;
 
     // Find the user by ID and update their details
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
         name,
-        profileImage,
+        profileImage: profileImageUrl, // Save the Cloudinary URL
         skills: skills?.split(",").map((skill) => skill.trim()),
         causes: causes?.split(",").map((cause) => cause.trim()),
       },

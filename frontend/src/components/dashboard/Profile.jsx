@@ -11,6 +11,7 @@ const Profile = () => {
   const [profileImage, setProfileImage] = useState("");
   const [skills, setSkills] = useState("");
   const [causes, setCauses] = useState("");
+  const [imageFile, setImageFile] = useState(null); // To store the uploaded image file
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -49,10 +50,30 @@ const Profile = () => {
       causes: causes.split(",").map((cause) => cause.trim()),
     };
 
+    // Create a FormData object for file upload
+    const formData = new FormData();
+    formData.append("name", updatedUser.name);
+    formData.append("skills", updatedUser.skills.join(", "));
+    formData.append("causes", updatedUser.causes.join(", "));
+    if (imageFile) {
+      formData.append("profileImage", imageFile); // Append the image file
+    }
+
+    // Log FormData entries to verify its contents
+    for (let [key, value] of formData.entries()) {
+      console.log(`[FormData] ${key}:`, value);
+    }
+
     // Call the updateData function from useApi to update the user data
     try {
-      await updateData("/user/single-user", "PUT", updatedUser);
+      const response = await updateData("/user/update-user", "PUT", formData); // No need to set Content-Type header
       setIsEditing(false);
+      setImageFile(null); // Reset the image file after upload
+
+      // Update the profileImage state with the new image URL from the response
+      if (response.data.profileImage) {
+        setProfileImage(response.data.profileImage);
+      }
     } catch (err) {
       console.error("Failed to update user:", err);
     }
@@ -65,6 +86,7 @@ const Profile = () => {
     setSkills(user?.skills?.join(", ") || "");
     setCauses(user?.causes?.join(", ") || "");
     setIsEditing(false);
+    setImageFile(null); // Reset the image file
   };
 
   const handleImageUpload = (e) => {
@@ -72,9 +94,10 @@ const Profile = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result);
+        setProfileImage(reader.result); // Set the preview image
       };
       reader.readAsDataURL(file);
+      setImageFile(file); // Store the file for upload
     }
   };
 

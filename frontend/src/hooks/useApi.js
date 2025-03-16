@@ -15,9 +15,6 @@ const useApi = () => {
   const stableCustomHeaders = useMemo(() => headers, [JSON.stringify(headers)]);
   const stableOptions = useMemo(() => options, [JSON.stringify(options)]);
 
-  console.log("[stableCustomHeaders]", stableCustomHeaders);
-  console.log("[stableOptions]", stableOptions);
-
   // Function to make API requests
   const makeRequest = useCallback(
     async (
@@ -43,20 +40,28 @@ const useApi = () => {
         setHeaders(customHeaders);
         setOptions(options);
 
+        // Initialize headers
+        const headers = {
+          Authorization: `Bearer ${token}`,
+          ...stableCustomHeaders, // Use stabilized custom headers
+        };
+
+        // Conditionally add Content-Type header if body is not FormData
+        if (!(body instanceof FormData)) {
+          headers["Content-Type"] = "application/json";
+        }
+
         const requestOptions = {
           method,
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            ...stableCustomHeaders, // Use stabilized custom headers
-          },
+          headers,
           signal: abortControllerRef.current.signal, // Add abort signal
           ...stableOptions, // Use stabilized options
         };
 
         // Add body to request options if method is POST, PUT, or PATCH
         if (["POST", "PUT", "PATCH"].includes(method.toUpperCase())) {
-          requestOptions.body = JSON.stringify(body);
+          requestOptions.body =
+            body instanceof FormData ? body : JSON.stringify(body);
         }
 
         const response = await fetch(`${baseURL + endpoint}`, requestOptions);
