@@ -1,7 +1,9 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef } from "react";
 import { FaUser, FaHeart, FaEdit, FaSave, FaTimes } from "react-icons/fa";
 import useApi from "../../hooks/useApi";
 import ProfileSkeleton from "../skeleton/ProfileSkeleton";
+import Image from "../global/Image";
 
 const Profile = () => {
   const { resData: user, loading, error, fetchData, updateData } = useApi();
@@ -93,18 +95,6 @@ const Profile = () => {
     setSaveError(null);
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setImageFile(file);
-    }
-  };
-
   return (
     <div className="md:col-span-1 bg-[#faf9f9] rounded-xl shadow-md p-6 h-fit relative">
       <div className="absolute top-4 left-4 right-4 flex justify-between">
@@ -148,42 +138,17 @@ const Profile = () => {
 
       <div className="text-center mb-6">
         <div className="relative w-32 h-32 mx-auto mb-4 overflow-hidden rounded-full">
-          <img
-            ref={imgRef}
-            src={imagePreview || profileImage || "https://placehold.co/400"}
-            alt="Profile"
-            className="w-32 h-32 rounded-full object-cover "
-            style={{
-              filter: imageLoaded ? "none" : "blur(20px)",
-              transition: imageLoaded ? "filter 0.3s ease-out" : "none",
-            }}
-            onLoad={() => {
-              if (
-                imgRef.current &&
-                typeof imgRef.current.decode === "function"
-              ) {
-                imgRef.current.decode().then(() => setImageLoaded(true));
-              } else {
-                setImageLoaded(true);
-              }
-            }}
-            loading="lazy"
+          <Image
+            image={imagePreview || profileImage || "https://placehold.co/400"}
+            alt="Profile Image"
+            imgRef={imgRef}
+            isImageLoaded={imageLoaded}
+            setImageLoaded={setImageLoaded}
+            isEditing={isEditing}
+            imagePreview={imagePreview}
+            setImagePreview={setImagePreview}
+            setImageFile={setImageFile}
           />
-          {isEditing && !imagePreview && (
-            <label
-              htmlFor="profile-image-upload"
-              className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer"
-            >
-              <span className="text-white text-sm">Upload</span>
-              <input
-                id="profile-image-upload"
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageUpload}
-              />
-            </label>
-          )}
         </div>
 
         {saveError && (
