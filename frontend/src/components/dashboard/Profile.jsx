@@ -1,24 +1,30 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FaUser, FaHeart, FaEdit, FaSave, FaTimes } from "react-icons/fa";
 import useApi from "../../hooks/useApi";
+import ProfileSkeleton from "../skeleton/ProfileSkeleton";
 
 const Profile = () => {
   const { resData: user, loading, error, fetchData, updateData } = useApi();
-
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState("");
   const [profileImage, setProfileImage] = useState("");
   const [skills, setSkills] = useState("");
   const [causes, setCauses] = useState("");
-  const [imageFile, setImageFile] = useState(null); // To store the uploaded image file
+  const [imageFile, setImageFile] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const imgRef = useRef(null);
 
-  // Fetch user data on component mount
+  useEffect(() => {
+    setImageLoaded(false);
+  }, [imagePreview, profileImage]);
+
   useEffect(() => {
     fetchData("/user/single-user");
   }, []);
 
-  // Update local state when user data is fetched
   useEffect(() => {
     if (user) {
       setName(user.name || "");
@@ -28,12 +34,8 @@ const Profile = () => {
     }
   }, [user]);
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
+  if (loading || error) {
+    return <ProfileSkeleton />;
   }
 
   const handleEditClick = () => {
@@ -41,7 +43,9 @@ const Profile = () => {
   };
 
   const handleSaveClick = async () => {
-    // Prepare the updated user data
+    setIsSaving(true);
+    setSaveError(null);
+
     const updatedUser = {
       ...user,
       name,
@@ -50,43 +54,43 @@ const Profile = () => {
       causes: causes.split(",").map((cause) => cause.trim()),
     };
 
-    // Create a FormData object for file upload
     const formData = new FormData();
     formData.append("name", updatedUser.name);
     formData.append("skills", updatedUser.skills.join(", "));
     formData.append("causes", updatedUser.causes.join(", "));
     if (imageFile) {
-      formData.append("profileImage", imageFile); // Append the image file
+      formData.append("profileImage", imageFile);
     }
 
-    // Log FormData entries to verify its contents
-    for (let [key, value] of formData.entries()) {
-      console.log(`[FormData] ${key}:`, value);
-    }
-
-    // Call the updateData function from useApi to update the user data
     try {
-      const response = await updateData("/user/update-user", "PUT", formData); // No need to set Content-Type header
+      const response = await updateData("/user/update-user", "PUT", formData);
       setIsEditing(false);
-      setImageFile(null); // Reset the image file after upload
+      setImageFile(null);
 
-      // Update the profileImage state with the new image URL from the response
       if (response.data.profileImage) {
         setProfileImage(response.data.profileImage);
+        setImagePreview("");
       }
     } catch (err) {
       console.error("Failed to update user:", err);
+      setSaveError("Failed to update user. Please try again.");
+      setTimeout(() => {
+        fetchData("/user/single-user");
+      }, 1000);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleCancelClick = () => {
-    // Discard changes and exit edit mode
     setName(user?.name || "");
     setProfileImage(user?.profileImage || "");
     setSkills(user?.skills?.join(", ") || "");
     setCauses(user?.causes?.join(", ") || "");
     setIsEditing(false);
-    setImageFile(null); // Reset the image file
+    setImageFile(null);
+    setImagePreview("");
+    setSaveError(null);
   };
 
   const handleImageUpload = (e) => {
@@ -94,20 +98,18 @@ const Profile = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfileImage(reader.result); // Set the preview image
+        setImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
-      setImageFile(file); // Store the file for upload
+      setImageFile(file);
     }
   };
 
   return (
     <div className="md:col-span-1 bg-[#faf9f9] rounded-xl shadow-md p-6 h-fit relative">
-      {/* Edit/Save and Cancel Buttons - Top Corners */}
       <div className="absolute top-4 left-4 right-4 flex justify-between">
         {isEditing ? (
           <>
-            {/* Cancel Button - Left Corner */}
             <button
               onClick={handleCancelClick}
               className="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 flex items-center"
@@ -115,13 +117,22 @@ const Profile = () => {
               <FaTimes className="mr-2" />
               Cancel
             </button>
-            {/* Save Button - Right Corner */}
             <button
               onClick={handleSaveClick}
+              disabled={isSaving}
               className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 flex items-center"
             >
-              <FaSave className="mr-2" />
-              Save
+              {isSaving ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Saving...
+                </div>
+              ) : (
+                <>
+                  <FaSave className="mr-2" />
+                  Save
+                </>
+              )}
             </button>
           </>
         ) : (
@@ -135,15 +146,30 @@ const Profile = () => {
         )}
       </div>
 
-      {/* Profile Content */}
       <div className="text-center mb-6">
-        <div className="relative w-32 h-32 mx-auto mb-4">
+        <div className="relative w-32 h-32 mx-auto mb-4 overflow-hidden rounded-full">
           <img
-            src={profileImage || "https://placehold.co/400"}
+            ref={imgRef}
+            src={imagePreview || profileImage || "https://placehold.co/400"}
             alt="Profile"
-            className="w-32 h-32 rounded-full object-cover"
+            className="w-32 h-32 rounded-full object-cover "
+            style={{
+              filter: imageLoaded ? "none" : "blur(20px)",
+              transition: imageLoaded ? "filter 0.3s ease-out" : "none",
+            }}
+            onLoad={() => {
+              if (
+                imgRef.current &&
+                typeof imgRef.current.decode === "function"
+              ) {
+                imgRef.current.decode().then(() => setImageLoaded(true));
+              } else {
+                setImageLoaded(true);
+              }
+            }}
+            loading="lazy"
           />
-          {isEditing && (
+          {isEditing && !imagePreview && (
             <label
               htmlFor="profile-image-upload"
               className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full cursor-pointer"
@@ -159,6 +185,10 @@ const Profile = () => {
             </label>
           )}
         </div>
+
+        {saveError && (
+          <div className="text-red-600 text-sm mt-2">{saveError}</div>
+        )}
 
         {isEditing ? (
           <input

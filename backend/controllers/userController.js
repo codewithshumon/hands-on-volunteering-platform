@@ -25,14 +25,17 @@ export const updateUser = async (req, res) => {
     const userId = req.user.id;
     const profileImageUrl = req.profileImageUrl;
 
+    // Extract fields from the request body
+    const { name, skills, causes } = req.body;
+
     // Find the user by ID and update their details
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        name,
+        name, // Use the extracted name
         profileImage: profileImageUrl, // Save the Cloudinary URL
-        skills: skills?.split(",").map((skill) => skill.trim()),
-        causes: causes?.split(",").map((cause) => cause.trim()),
+        skills: skills?.split(",").map((skill) => skill.trim()), // Split and trim skills
+        causes: causes?.split(",").map((cause) => cause.trim()), // Split and trim causes
       },
       { new: true }
     ).select("-password");
