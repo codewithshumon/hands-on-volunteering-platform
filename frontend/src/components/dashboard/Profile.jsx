@@ -1,9 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef } from "react";
 import { FaUser, FaHeart, FaEdit, FaSave, FaTimes } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+
 import useApi from "../../hooks/useApi";
 import ProfileSkeleton from "../skeleton/ProfileSkeleton";
 import Image from "../global/Image";
+import { updateUserData } from "../../store/slices/authSlice";
 
 const Profile = () => {
   const { resData: user, loading, error, fetchData, updateData } = useApi();
@@ -18,6 +21,7 @@ const Profile = () => {
   const [imagePreview, setImagePreview] = useState("");
   const [imageLoaded, setImageLoaded] = useState(false);
   const imgRef = useRef(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     setImageLoaded(false);
@@ -73,6 +77,8 @@ const Profile = () => {
         setProfileImage(response.data.profileImage);
         setImagePreview("");
       }
+
+      dispatch(updateUserData(response.data));
     } catch (err) {
       console.error("Failed to update user:", err);
       setSaveError("Failed to update user. Please try again.");
