@@ -7,7 +7,7 @@ const useApi = () => {
   const [error, setError] = useState(null);
   const [headers, setHeaders] = useState(null);
   const [options, setOptions] = useState(null);
-  const abortControllerRef = useRef(null); // For request cancellation
+  const isCanceledRef = useRef(false);
 
   const token = localStorage.getItem("token");
   const baseURL = import.meta.env.VITE_API_BASE_URL;
@@ -24,14 +24,7 @@ const useApi = () => {
       customHeaders = {},
       options = {}
     ) => {
-      // Abort any ongoing request
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-
-      // Create a new AbortController for the current request
-      abortControllerRef.current = new AbortController();
-
+      isCanceledRef.current = false;
       setLoading(true);
       setError(null);
 
@@ -54,7 +47,6 @@ const useApi = () => {
         const requestOptions = {
           method,
           headers,
-          signal: abortControllerRef.current.signal, // Add abort signal
           ...stableOptions, // Use stabilized options
         };
 
@@ -66,6 +58,11 @@ const useApi = () => {
 
         const response = await fetch(`${baseURL + endpoint}`, requestOptions);
 
+        // Check if the request was canceled
+        if (isCanceledRef.current) {
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -75,13 +72,14 @@ const useApi = () => {
 
         return result; // Return the response data
       } catch (err) {
-        if (err.name !== "AbortError") {
+        if (!isCanceledRef.current) {
           setError(err.message || "Something went wrong!");
         }
         throw err; // Re-throw the error for the caller to handle
       } finally {
-        setLoading(false);
-        abortControllerRef.current = null; //
+        if (!isCanceledRef.current) {
+          setLoading(false);
+        }
       }
     },
     [stableCustomHeaders, stableOptions, token, baseURL]
@@ -89,8 +87,8 @@ const useApi = () => {
 
   // Function to cancel the ongoing request
   const cancelRequest = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
+    if (isCanceledRef.current) {
+      return;
     }
   }, []);
 
