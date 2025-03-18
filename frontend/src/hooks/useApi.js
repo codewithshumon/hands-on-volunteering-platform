@@ -64,7 +64,11 @@ const useApi = () => {
         }
 
         if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
+          // Parse the error response from the backend
+          const errorResponse = await response.json();
+          throw new Error(
+            errorResponse.message || `HTTP error! Status: ${response.status}`
+          );
         }
 
         const result = await response.json();

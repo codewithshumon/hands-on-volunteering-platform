@@ -15,7 +15,7 @@ const router = express.Router();
 
 router.get("/get-all-events", verifyToken, getAllEvents);
 
-router.get("/get-my-events", verifyToken, getMyEvents);
+router.get("/get-my-events/:userId", verifyToken, getMyEvents);
 
 router.post("/create-event", verifyToken, createEvent);
 

@@ -52,8 +52,6 @@ export const signup = async (req, res, next) => {
       emailVerificationCodeExpires: verificationCodeExpiry,
     });
 
-    console.log("[verificationCode]", verificationCode);
-
     // Send verification code via email
     await sendVerificationEmail(email, verificationCode);
 
@@ -179,9 +177,18 @@ export const login = async (req, res, next) => {
     }
 
     // Generate JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
+    const token = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+        profileImage: user.profileImage,
+        email: user.email,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: process.env.JWT_EXPIRES_IN,
+      }
+    );
 
     // Convert user to plain object and separate password
     const { password: userPassword, ...rest } = user.toObject();
@@ -208,6 +215,7 @@ const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid token" });

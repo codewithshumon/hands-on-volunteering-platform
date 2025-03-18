@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
 import { FaSearch, FaPlus } from "react-icons/fa";
@@ -6,6 +7,7 @@ import Modal from "../../components/modal/Modal";
 import EventCreationForm from "../../components/events/EventCreationForm";
 import EventCard from "../../components/events/EventsCard";
 import useApi from "../../hooks/useApi";
+import EventDetailsView from "../../components/events/EventDetailsView";
 
 const EventsPage = () => {
   const { fetchData, resData: events, loading, error } = useApi();
@@ -14,8 +16,7 @@ const EventsPage = () => {
     fetchData("/event/get-all-events");
   }, []);
 
-  console.log("[events]", events);
-
+  console.log("[events in EventPage]", events);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEventCardModal, setShowEventCardModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -99,60 +100,14 @@ const EventsPage = () => {
       </Modal>
 
       {/* Event Details Modal */}
-      {selectedEvent && showEventCardModal && (
-        <Modal
-          isOpen={selectedEvent && true}
-          setCloseModalHandler={setShowEventCardModal}
-        >
-          <div className="p-4">
-            <div className="bg-white rounded-xl p-6 w-full max-w-2xl">
-              <div className="flex justify-between items-start mb-6">
-                <h2 className="text-2xl font-bold">{selectedEvent.title}</h2>
-                <button
-                  className="text-gray-500 hover:text-gray-700"
-                  onClick={() => setSelectedEvent(null)}
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <p className="text-gray-600 mb-4">
-                    {selectedEvent.description}
-                  </p>
-                  <div className="space-y-2">
-                    <p>
-                      <strong>Date:</strong> {selectedEvent.date}
-                    </p>
-                    <p>
-                      <strong>Location:</strong> {selectedEvent.location}
-                    </p>
-                    <p>
-                      <strong>Volunteers:</strong>{" "}
-                      {selectedEvent.attendees.length}/
-                      {selectedEvent.volunteersNeeded}
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Attendees</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedEvent.attendees.map((attendee, index) => (
-                      <span
-                        key={index}
-                        className="bg-gray-100 px-3 py-1 rounded-full"
-                      >
-                        {attendee}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Modal>
+      {selectedEvent && (
+        <EventDetailsView
+          event={selectedEvent}
+          onClose={() => {
+            setSelectedEvent(null);
+            setShowEventCardModal(false);
+          }}
+        />
       )}
     </div>
   );

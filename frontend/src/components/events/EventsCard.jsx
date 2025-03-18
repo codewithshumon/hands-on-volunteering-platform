@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback } from "react";
+import { useSelector } from "react-redux";
 import {
   FaCalendar,
   FaMapMarker,
@@ -8,11 +8,12 @@ import {
   FaEye,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+
 import formatTime from "../../utils/formatTime";
+import useApi from "../../hooks/useApi";
 
 // Category mapping
 const categoryMapping = {
-  all: "All Categories",
   environment: "Environment",
   education: "Education",
   humanitarian: "Humanitarian",
@@ -23,10 +24,26 @@ const categoryMapping = {
 };
 
 const EventCard = ({ event, onSelect, modalClose }) => {
+  const { updateData } = useApi();
+  const currentUser = useSelector((state) => state.auth.user);
+
+  // Check if the current user has joined the event
+  const isJoined = event.attendees.some(
+    (attendee) => attendee.userId.toString() === currentUser._id.toString()
+  );
+
   const eventCardHandler = useCallback(() => {
     onSelect(event);
     modalClose(true);
   }, [event, onSelect, modalClose]);
+
+  const handleJoin = useCallback(async () => {
+    try {
+      await updateData(`/event/join/${event._id}`, "POST");
+    } catch (error) {
+      alert(error.message);
+    }
+  }, [event._id, updateData]);
 
   // Get the display text for the category
   const categoryText = categoryMapping[event.category] || event.category;
@@ -87,13 +104,15 @@ const EventCard = ({ event, onSelect, modalClose }) => {
             <FaEye size={16} /> {/* View icon */}
             View
           </button>
-          <button
-            className="border border-blue-500 text-gray-800 px-4 py-1 rounded-lg hover:text-white hover:bg-blue-600 flex items-center gap-2 cursor-pointer"
-            onClick={eventCardHandler}
-          >
-            <FaUserPlus size={18} /> {/* Join icon */}
-            Join
-          </button>
+          {!isJoined && (
+            <button
+              className="border border-blue-500 text-gray-800 px-4 py-1 rounded-lg hover:text-white hover:bg-blue-600 flex items-center gap-2 cursor-pointer"
+              onClick={handleJoin}
+            >
+              <FaUserPlus size={18} /> {/* Join icon */}
+              Join
+            </button>
+          )}
         </div>
       </div>
     </div>

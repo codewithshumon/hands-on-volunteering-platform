@@ -16,13 +16,15 @@ export const getAllEvents = async (req, res) => {
 };
 
 export const getMyEvents = async (req, res) => {
-  const userId = req.user._id; // Assuming user ID is available from authentication middleware
-
+  const { userId } = req.params;
   try {
     const events = await Event.find({ createdBy: userId }).populate(
       "createdBy",
-      "name profileImage"
+      "name profileImage _id"
     ); // Populate creator details
+
+    console.log("[events in getMyEvents]", events);
+
     res
       .status(200)
       .json({ message: "Your events fetched successfully", data: events });
@@ -42,9 +44,6 @@ export const createEvent = async (req, res) => {
     volunteersNeeded,
   } = req.body;
   const userId = req.user.id;
-
-  console.log("[req.body]", req.body);
-  console.log("[userId]", userId);
 
   try {
     const event = new Event({
@@ -104,14 +103,19 @@ export const updateEvent = async (req, res) => {
 
 export const joinEvent = async (req, res) => {
   const { eventId } = req.params;
-  const userId = req.user._id; // Assuming user ID is available from authentication middleware
-  const { name, profileImage } = req.user; // User details from the authenticated user
+  const userId = req.user.id;
+  const { name, profileImage } = req.user;
 
   try {
     const event = await Event.findById(eventId);
 
     if (!event) {
       return res.status(404).json({ message: "Event not found" });
+    }
+
+    // Check if the user is the creator of the event
+    if (event.createdBy.toString() === userId.toString()) {
+      return res.status(400).json({ message: "You can't join your event" });
     }
 
     // Check if the user has already joined the event
@@ -141,13 +145,15 @@ export const joinEvent = async (req, res) => {
 
     res.status(200).json({ message: "Joined event successfully", event });
   } catch (error) {
+    console.log("[joinEvent]", joinEvent);
+
     res.status(500).json({ message: "Error joining event", error });
   }
 };
 
 export const leaveEvent = async (req, res) => {
   const { eventId } = req.params;
-  const userId = req.user._id;
+  const userId = req.user.id;
 
   try {
     const event = await Event.findById(eventId);
@@ -158,8 +164,10 @@ export const leaveEvent = async (req, res) => {
 
     // Remove the user from the event's attendees list
     event.attendees = event.attendees.filter(
-      (attendee) => attendee.userId.toString() !== userId.toString()
+      (attendee) =>
+        attendee.userId && attendee.userId.toString() !== userId.toString()
     );
+
     await event.save();
 
     // Remove the event from the user's joinedEvents array
@@ -169,6 +177,8 @@ export const leaveEvent = async (req, res) => {
 
     res.status(200).json({ message: "Left event successfully", event });
   } catch (error) {
+    console.log("[error leave]", error);
+
     res.status(500).json({ message: "Error leaving event", error });
   }
 };

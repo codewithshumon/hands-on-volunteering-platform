@@ -11,8 +11,6 @@ export const getSingleUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    console.log("[user]", user);
-
     res.status(200).json({
       status: "success",
       data: user,

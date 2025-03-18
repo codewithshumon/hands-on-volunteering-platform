@@ -6,11 +6,14 @@ import { useParams } from "react-router-dom";
 import useApi from "../../hooks/useApi";
 import ImageView from "../../components/global/ImageView";
 import ProfileSkeleton from "../../components/skeleton/ProfileSkeleton";
+import EventsCreated from "../../components/user/public-profile/EventsCreated";
 
 const UserPublicProfile = () => {
   const { userId } = useParams();
   const { resData: user, loading, error, fetchData } = useApi();
   const [volunteerHistory, setVolunteerHistory] = useState([]);
+
+  console.log("[userId]", userId);
 
   useEffect(() => {
     fetchData(`/user/single-user/${userId}`);
@@ -122,6 +125,11 @@ const UserPublicProfile = () => {
           ) : (
             <p className="text-gray-600">No volunteering history available.</p>
           )}
+        </div>
+
+        {/* Events Created by the User */}
+        <div className="mt-8">
+          <EventsCreated userId={userId} />
         </div>
       </div>
     </div>

@@ -23,7 +23,7 @@ const Modal = ({ isOpen, children, setCloseModalHandler }) => {
       onClick={closeModalHandler}
     >
       <div
-        className="p-4 overflow-auto rounded-2xl"
+        className="max-w-[95vw] max-h-[95vh]  sm:max-w-auto sm:max-h-auto p-4 overflow-auto sm:overflow-hidden rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {children}
