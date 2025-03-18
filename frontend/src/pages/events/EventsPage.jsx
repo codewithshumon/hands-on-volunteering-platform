@@ -1,24 +1,20 @@
-import { useState } from "react";
+/* eslint-disable no-unused-vars */
+import { useEffect, useState } from "react";
 import { FaSearch, FaPlus } from "react-icons/fa";
 
 import Modal from "../../components/modal/Modal";
 import EventCreationForm from "../../components/events/EventCreationForm";
 import EventCard from "../../components/events/EventsCard";
+import useApi from "../../hooks/useApi";
 
 const EventsPage = () => {
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "Community Food Drive",
-      date: "2023-09-20",
-      location: "City Center",
-      category: "Humanitarian",
-      volunteersNeeded: 15,
-      description: "Help distribute food packages to families in need",
-      attendees: ["John D.", "Sarah M."],
-      status: "Upcoming",
-    },
-  ]);
+  const { fetchData, resData: events, loading, error } = useApi();
+
+  useEffect(() => {
+    fetchData("/event/get-all-events");
+  }, []);
+
+  console.log("[events]", events);
 
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEventCardModal, setShowEventCardModal] = useState(false);
@@ -28,20 +24,6 @@ const EventsPage = () => {
     category: "all",
     date: "",
   });
-
-  console.log("[showCreateModal]", showCreateModal);
-
-  const handleCreateEvent = (formData) => {
-    const newEvent = {
-      ...formData,
-      id: events.length + 1,
-      volunteersNeeded: 10,
-      attendees: [],
-      status: "Upcoming",
-    };
-    setEvents([...events, newEvent]);
-    setShowCreateModal(false);
-  };
 
   return (
     <div className="max-w-7xl mx-auto p-6 pt-22">
@@ -83,6 +65,10 @@ const EventsPage = () => {
               <option value="environment">Environment</option>
               <option value="education">Education</option>
               <option value="humanitarian">Humanitarian</option>
+              <option value="health">Health & Wellness</option>
+              <option value="animals">Animals</option>
+              <option value="community">Community Development</option>
+              <option value="youth">Youth & Children</option>
             </select>
 
             <input
@@ -95,23 +81,21 @@ const EventsPage = () => {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.map((event) => (
-          <EventCard
-            key={event.id}
-            event={event}
-            onSelect={setSelectedEvent}
-            modalClose={setShowEventCardModal}
-          />
-        ))}
+      <div className="grid md:grid-cols-2 gap-6">
+        {events &&
+          events.map((event) => (
+            <EventCard
+              key={event.id}
+              event={event}
+              onSelect={setSelectedEvent}
+              modalClose={setShowEventCardModal}
+            />
+          ))}
       </div>
 
       {/* Modal for Creating Events */}
       <Modal isOpen={showCreateModal} setCloseModalHandler={setShowCreateModal}>
-        <EventCreationForm
-          onSubmit={handleCreateEvent}
-          onCancel={() => setShowCreateModal(false)}
-        />
+        <EventCreationForm onCancel={() => setShowCreateModal(false)} />
       </Modal>
 
       {/* Event Details Modal */}

@@ -27,11 +27,9 @@ import ImpactDashboard from "./pages/impact/ImpactDashboardPage";
 import ImpactLeaderboardPage from "./pages/impact/ImpactLeaderboardPage";
 import LogHoursPage from "./pages/impact/LogHourPage";
 
-import Login from "./pages/test/Login";
-import Signup from "./pages/test/Signup";
-import TestVerifyEmail from "./pages/test/VerifyEmail";
 import VerifyPassword from "./pages/auth/VerifyPassword";
 import UserPublicProfile from "./pages/user/UserPublicProfile";
+import EventFeedPage from "./pages/test/EventFeedPage";
 
 function App() {
   return (
@@ -44,6 +42,7 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
+            {/* <Route path="/text/EventFeedPage" element={<EventFeedPage />} /> */}
 
             {/* user Routes */}
             <Route
@@ -117,20 +116,6 @@ function App() {
                     />
                     <Route path="impact/log-hour" element={<LogHoursPage />} />
                     <Route path="*" element={<PageNotFound />} />
-                  </Routes>
-                </AuthGuard>
-              }
-            />
-
-            {/* Redirect Routes */}
-            <Route
-              path="/test/*"
-              element={
-                <AuthGuard type="test" url="/dashboard">
-                  <Routes>
-                    <Route path="login" element={<Login />} />
-                    <Route path="signup" element={<Signup />} />
-                    <Route path="verify-email" element={<TestVerifyEmail />} />
                   </Routes>
                 </AuthGuard>
               }

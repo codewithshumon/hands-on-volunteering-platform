@@ -41,6 +41,19 @@ const UserSchema = new mongoose.Schema({
       date: { type: Date, default: Date.now },
     },
   ],
+  createdEvents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+    },
+  ],
+  joinedEvents: [
+    {
+      eventId: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
+      hours: { type: Number, default: 0 },
+      date: { type: Date, default: Date.now },
+    },
+  ],
   isEmailVerified: {
     type: Boolean,
     default: false,

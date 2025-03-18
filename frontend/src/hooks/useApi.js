@@ -72,6 +72,8 @@ const useApi = () => {
 
         return result; // Return the response data
       } catch (err) {
+        console.log("[ERROR FROM useApi]", err);
+
         if (!isCanceledRef.current) {
           setError(err.message || "Something went wrong!");
         }
