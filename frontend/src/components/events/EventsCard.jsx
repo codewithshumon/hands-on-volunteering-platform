@@ -8,6 +8,7 @@ import {
   FaEye,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import formatTime from "../../utils/formatTime";
 
 // Category mapping
 const categoryMapping = {
@@ -38,7 +39,8 @@ const EventCard = ({ event, onSelect, modalClose }) => {
             <h3 className="text-2xl font-bold mb-2">{event.title}</h3>
             <div className="flex items-center text-gray-600">
               <FaCalendar className="mr-2" />
-              {new Date(event.date).toLocaleDateString()} | {event.time}
+              {new Date(event.date).toLocaleDateString()} |{" "}
+              {formatTime(event.time)}
             </div>
             <div className="flex items-center text-gray-600">
               <FaMapMarker className="mr-2" />
