@@ -1,4 +1,4 @@
-const Image = ({
+const ImageUpload = ({
   image,
   alt = "Image",
   imgRef,
@@ -93,4 +93,4 @@ const Image = ({
   );
 };
 
-export default Image;
+export default ImageUpload;

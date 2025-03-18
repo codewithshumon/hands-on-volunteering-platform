@@ -5,7 +5,7 @@ import UpcomingEvents from "../../components/dashboard/UpcomingEvents";
 import VolunteerHistory from "../../components/dashboard/VolunteerHistory";
 import DiscoverEvents from "../../components/dashboard/DiscoverEvents";
 
-const Dashboard = () => {
+const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("history");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -102,4 +102,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default UserDashboard;

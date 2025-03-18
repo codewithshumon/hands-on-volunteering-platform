@@ -7,6 +7,7 @@ import { upload, uploadToCloudinary } from "../utils/upload.js";
 const router = express.Router();
 
 router.get("/single-user", verifyToken, getSingleUser);
+router.get("/single-user/:userId", verifyToken, getSingleUser);
 router.put(
   "/update-user",
   verifyToken,

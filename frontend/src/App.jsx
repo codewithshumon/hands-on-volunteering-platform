@@ -15,7 +15,7 @@ import AuthPage from "./pages/auth/AuthPage";
 import VerifyEmail from "./pages/auth/VerifyEmail";
 
 import Home from "./pages/Home";
-import Dashboard from "./pages/dashboard/Dashboard";
+import UserDashboard from "./pages/user/UserDashboard";
 import EventsPage from "./pages/events/EventsPage";
 import { CommunityHelpPage } from "./pages/community/CommunityHelpPage";
 
@@ -31,6 +31,7 @@ import Login from "./pages/test/Login";
 import Signup from "./pages/test/Signup";
 import TestVerifyEmail from "./pages/test/VerifyEmail";
 import VerifyPassword from "./pages/auth/VerifyPassword";
+import UserPublicProfile from "./pages/user/UserPublicProfile";
 
 function App() {
   return (
@@ -93,7 +94,11 @@ function App() {
               element={
                 <AuthGuard type="non-user" url="/login">
                   <Routes>
-                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route
+                      path="/user/profile/:userId"
+                      element={<UserPublicProfile />}
+                    />
+                    <Route path="/dashboard" element={<UserDashboard />} />
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/community" element={<CommunityHelpPage />} />
                     <Route path="/teams" element={<TeamPage />} />

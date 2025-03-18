@@ -5,8 +5,8 @@ import { useDispatch } from "react-redux";
 
 import useApi from "../../hooks/useApi";
 import ProfileSkeleton from "../skeleton/ProfileSkeleton";
-import Image from "../global/Image";
 import { updateUserData } from "../../store/slices/authSlice";
+import ImageUpload from "../global/ImageUpload";
 
 const Profile = () => {
   const { resData: user, loading, error, fetchData, updateData } = useApi();
@@ -144,7 +144,7 @@ const Profile = () => {
 
       <div className="text-center mb-6">
         <div className="relative w-32 h-32 mx-auto mb-4 overflow-hidden rounded-full">
-          <Image
+          <ImageUpload
             image={imagePreview || profileImage || "https://placehold.co/400"}
             alt="Profile Image"
             imgRef={imgRef}

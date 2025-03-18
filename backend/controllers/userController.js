@@ -1,9 +1,11 @@
 import User from "../models/UserSchema.js";
 
 export const getSingleUser = async (req, res) => {
+  const userId = req.params.userId || req.user.id;
+
   try {
     // req.user is set by the verifyToken middleware
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById(userId).select("-password");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
