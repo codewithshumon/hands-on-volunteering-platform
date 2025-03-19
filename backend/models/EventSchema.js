@@ -16,11 +16,11 @@ const EventSchema = new mongoose.Schema({
     required: true,
   },
   startTime: {
-    type: String,
+    type: Date, // Store as Date object
     required: true,
   },
   endTime: {
-    type: String,
+    type: Date, // Store as Date object
     required: true,
   },
   location: {
@@ -74,16 +74,15 @@ const EventSchema = new mongoose.Schema({
 
 // Pre-save hook to calculate eventHours
 EventSchema.pre("save", function (next) {
-  const start = this.startTime.split(":"); // Split startTime into hours and minutes
-  const end = this.endTime.split(":"); // Split endTime into hours and minutes
-
-  // Convert times to total minutes
-  const startMinutes = parseInt(start[0], 10) * 60 + parseInt(start[1], 10);
-  const endMinutes = parseInt(end[0], 10) * 60 + parseInt(end[1], 10);
+  // Calculate the difference between startTime and endTime in hours
+  const start = this.startTime.getTime(); // Get start time in milliseconds
+  const end = this.endTime.getTime(); // Get end time in milliseconds
 
   // Calculate the difference in hours
-  const diffMinutes = endMinutes - startMinutes;
-  this.eventHours = diffMinutes / 60; // Store the hour difference
+  const diffHours = (end - start) / (1000 * 60 * 60); // Convert milliseconds to hours
+
+  // Assign the calculated hours to eventHours
+  this.eventHours = diffHours;
 
   next();
 });

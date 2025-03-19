@@ -111,13 +111,17 @@ export const createEvent = async (req, res) => {
   } = req.body;
 
   try {
+    // Combine the date with startTime and endTime to create Date objects
+    const startDateTime = new Date(`${date}T${startTime}`);
+    const endDateTime = new Date(`${date}T${endTime}`);
+
     // Create a new event
     const event = new Event({
       title,
       description,
-      date,
-      startTime,
-      endTime,
+      date: new Date(date),
+      startTime: startDateTime,
+      endTime: endDateTime,
       location,
       category,
       volunteersNeeded,
