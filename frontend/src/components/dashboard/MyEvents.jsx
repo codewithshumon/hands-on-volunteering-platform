@@ -9,17 +9,18 @@ import {
   FaTimesCircle,
   FaEdit,
   FaTrash,
+  FaCheck, // Add this icon for "completed"
 } from "react-icons/fa";
-import useApi from "../../hooks/useApi"; // Import the useApi hook
+import useApi from "../../hooks/useApi";
 import Modal from "../modal/Modal";
 import EditEvents from "../events/EditEvents";
 import formatTime from "../../utils/formatTime";
 
 const MyEvents = ({ user }) => {
-  const [events, setEvents] = useState([]); // State to store fetched events
-  const [showModal, setShowModal] = useState(false); // State to show modal
-  const [editingEvent, setEditingEvent] = useState(null); // State to track the event being edited
-  const { resData, loading, error, fetchData, updateData } = useApi(); // Destructure useApi hook
+  const [events, setEvents] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
+  const { resData, loading, error, fetchData, updateData } = useApi();
 
   // Fetch events when the component mounts
   useEffect(() => {
@@ -29,19 +30,19 @@ const MyEvents = ({ user }) => {
   // Update the events state when resData changes
   useEffect(() => {
     if (resData) {
-      setEvents(resData); // Set the fetched events to the state
+      setEvents(resData);
     }
   }, [resData]);
 
   // Handle Edit Event
   const handleEdit = useCallback((event) => {
-    setEditingEvent(event); // Set the event to be edited
+    setEditingEvent(event);
     setShowModal(true);
   }, []);
 
   // Handle Cancel Edit
   const handleCancelEdit = useCallback(() => {
-    setEditingEvent(null); // Clear the editing state
+    setEditingEvent(null);
     setShowModal(false);
   }, []);
 
@@ -50,8 +51,8 @@ const MyEvents = ({ user }) => {
     async (eventId, updatedData) => {
       try {
         await updateData(`/event/update/${eventId}`, "PUT", updatedData);
-        setEditingEvent(null); // Clear the editing state
-        fetchData(`/event/get-my-events/${user._id}`); // Refresh the events list
+        setEditingEvent(null);
+        fetchData(`/event/get-my-events/${user._id}`);
       } catch (err) {
         console.error("Error updating event:", err);
       }
@@ -64,7 +65,7 @@ const MyEvents = ({ user }) => {
     async (eventId) => {
       try {
         await updateData(`/event/delete/${eventId}`, "DELETE");
-        fetchData(`/event/get-my-events/${user._id}`); // Refresh the events list
+        fetchData(`/event/get-my-events/${user._id}`);
       } catch (err) {
         console.error("Error deleting event:", err);
       }
@@ -133,13 +134,18 @@ const MyEvents = ({ user }) => {
                   {event.status === "cancelled" && (
                     <FaTimesCircle className="w-5 h-5 text-red-600" />
                   )}
+                  {event.status === "completed" && (
+                    <FaCheck className="w-5 h-5 text-purple-600" /> // Icon for "completed"
+                  )}
                   <span
                     className={`px-3 py-1 rounded-md text-sm font-semibold ${
                       event.status === "ongoing"
                         ? "bg-green-100 text-green-700"
                         : event.status === "upcoming"
                         ? "bg-blue-100 text-blue-700"
-                        : "bg-gray-100 text-gray-700"
+                        : event.status === "cancelled"
+                        ? "bg-gray-100 text-gray-700"
+                        : "bg-purple-100 text-purple-700" // Style for "completed"
                     }`}
                   >
                     {event.status.charAt(0).toUpperCase() +
@@ -156,7 +162,10 @@ const MyEvents = ({ user }) => {
                 {/* Time */}
                 <div className="flex items-center space-x-3">
                   <FaClock className="w-5 h-5 text-blue-600" />
-                  <p>Time: {formatTime(event.time)}</p>
+                  <p>
+                    Time: {formatTime(event.startTime)} -{" "}
+                    {formatTime(event.endTime)}
+                  </p>
                 </div>
 
                 {/* Location */}

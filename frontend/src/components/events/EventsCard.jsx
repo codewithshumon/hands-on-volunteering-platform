@@ -23,7 +23,7 @@ const categoryMapping = {
   youth: "Youth & Children",
 };
 
-const EventCard = ({ event, onSelect }) => {
+const EventCard = ({ event, onSelect, onEventJoin }) => {
   const { updateData } = useApi();
   const currentUser = useSelector((state) => state.auth.user);
 
@@ -39,10 +39,14 @@ const EventCard = ({ event, onSelect }) => {
   const handleJoin = useCallback(async () => {
     try {
       await updateData(`/event/join/${event._id}`, "POST");
+
+      if (onEventJoin) {
+        onEventJoin();
+      }
     } catch (error) {
       alert(error.message);
     }
-  }, [event._id, updateData]);
+  }, [event._id, updateData, onEventJoin]);
 
   // Get the display text for the category
   const categoryText = categoryMapping[event.category] || event.category;
@@ -56,7 +60,7 @@ const EventCard = ({ event, onSelect }) => {
             <div className="flex items-center text-gray-600">
               <FaCalendar className="mr-2" />
               {new Date(event.date).toLocaleDateString()} |{" "}
-              {formatTime(event.time)}
+              {formatTime(event.startTime)} - {formatTime(event.endTime)}
             </div>
             <div className="flex items-center text-gray-600">
               <FaMapMarker className="mr-2" />

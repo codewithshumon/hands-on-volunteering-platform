@@ -1,30 +1,34 @@
-/* eslint-disable no-unused-vars */
 import { useState } from "react";
 import useApi from "../../hooks/useApi";
 
-const EventCreationForm = ({ onCancel }) => {
+const EventCreationForm = ({ onCancel, onEventCreated }) => {
   const { updateData, loading, error } = useApi();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
     date: "",
-    time: "",
+    startTime: "",
+    endTime: "",
     location: "",
     category: "",
     volunteersNeeded: 1,
   });
+
+  console.log("[formData in EventCreationForm]", formData);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
       // Call the API to create the event
-      const response = await updateData(
-        "/event/create-event",
-        "POST",
-        formData
-      );
+      await updateData("/event/create-event", "POST", formData);
 
+      // Call the callback to refresh the events list
+      if (onEventCreated) {
+        onEventCreated();
+      }
+
+      // Close the modal
       onCancel();
     } catch (err) {
       console.error("Error creating event:", err);
@@ -36,6 +40,7 @@ const EventCreationForm = ({ onCancel }) => {
     <div className="max-w-md mx-auto p-4 bg-white rounded-xl shadow-md">
       <h2 className="text-xl font-bold mb-4">Create New Event</h2>
       <form onSubmit={handleSubmit} className="space-y-3">
+        {/* Title */}
         <div>
           <label className="block text-xs font-medium mb-1">Event Title</label>
           <input
@@ -49,6 +54,7 @@ const EventCreationForm = ({ onCancel }) => {
           />
         </div>
 
+        {/* Description */}
         <div>
           <label className="block text-xs font-medium mb-1">Description</label>
           <textarea
@@ -61,7 +67,8 @@ const EventCreationForm = ({ onCancel }) => {
           />
         </div>
 
-        <div className="grid md:grid-cols-2 gap-3">
+        {/* Date, Start Time, and End Time */}
+        <div className="grid md:grid-cols-3 gap-3">
           <div>
             <label className="block text-xs font-medium mb-1">Date</label>
             <input
@@ -76,19 +83,33 @@ const EventCreationForm = ({ onCancel }) => {
           </div>
 
           <div>
-            <label className="block text-xs font-medium mb-1">Time</label>
+            <label className="block text-xs font-medium mb-1">Start Time</label>
             <input
               type="time"
               required
               className="w-full px-3 py-2 text-sm rounded-lg border focus:ring-2"
-              value={formData.time}
+              value={formData.startTime}
               onChange={(e) =>
-                setFormData({ ...formData, time: e.target.value })
+                setFormData({ ...formData, startTime: e.target.value })
+              }
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium mb-1">End Time</label>
+            <input
+              type="time"
+              required
+              className="w-full px-3 py-2 text-sm rounded-lg border focus:ring-2"
+              value={formData.endTime}
+              onChange={(e) =>
+                setFormData({ ...formData, endTime: e.target.value })
               }
             />
           </div>
         </div>
 
+        {/* Category, Location, and Volunteers Needed */}
         <div className="grid md:grid-cols-[2fr_2fr_1fr] gap-3">
           <div>
             <label className="block text-xs font-medium mb-1">Category</label>

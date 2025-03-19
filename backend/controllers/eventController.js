@@ -13,14 +13,14 @@ export const getAllEvents = async (req, res) => {
 
     // Add status to the query if provided
     if (status) {
-      // If status is an array (multiple statuses), use $in operator
       if (Array.isArray(status)) {
         query.status = { $in: status }; // Filter for multiple statuses
       } else {
         query.status = status; // Filter for a single status
       }
     }
-    // Add userId to the query if provided (to check if the user has joined the event)
+
+    // Add userId to the query if provided
     if (userId) {
       // Validate userId before converting to ObjectId
       if (!mongoose.isValidObjectId(userId)) {
@@ -28,8 +28,12 @@ export const getAllEvents = async (req, res) => {
           message: "Invalid userId format",
         });
       }
-      // Use dot notation to query nested field attendees.userId
-      query["attendees.userId"] = new Types.ObjectId(userId);
+
+      // Use $or to check if userId is in attendees or createdBy
+      query.$or = [
+        { "attendees.userId": new Types.ObjectId(userId) }, // Check attendees
+        { createdBy: new Types.ObjectId(userId) }, // Check createdBy
+      ];
     }
 
     // Fetch events based on the query
@@ -93,39 +97,46 @@ export const getMyEventsByStatus = async (req, res) => {
 };
 
 export const createEvent = async (req, res) => {
+  console.log("[Request Body]", req.body); // Debugging line
+
   const {
     title,
     description,
     date,
-    time,
+    startTime,
+    endTime,
     location,
     category,
     volunteersNeeded,
   } = req.body;
-  const userId = req.user.id;
 
   try {
+    // Create a new event
     const event = new Event({
       title,
       description,
       date,
-      time,
+      startTime,
+      endTime,
       location,
       category,
       volunteersNeeded,
-      createdBy: userId,
+      createdBy: req.user.id, // Assuming the user is authenticated
     });
 
+    // Save the event to the database
     await event.save();
 
-    // Add the event to the user's createdEvents array
-    await User.findByIdAndUpdate(userId, {
-      $push: { createdEvents: event._id },
+    res.status(201).json({
+      message: "Event created successfully",
+      data: event,
     });
-
-    res.status(201).json({ message: "Event created successfully", event });
   } catch (error) {
-    res.status(500).json({ message: "Error creating event", error });
+    console.error("[error in createEvent]", error);
+    res.status(500).json({
+      message: "Error creating event",
+      error: error.message,
+    });
   }
 };
 

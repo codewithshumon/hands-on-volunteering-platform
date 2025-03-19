@@ -9,10 +9,10 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
         title: formData.get("title"),
         description: formData.get("description"),
         date: formData.get("date"),
-        time: formData.get("time"),
+        startTime: formData.get("startTime"),
+        endTime: formData.get("endTime"),
         location: formData.get("location"),
-        status: formData.get("status"),
-        category: formData.get("category"), // Add category to the updated data
+        category: formData.get("category"),
       };
       handleUpdate(editingEvent._id, updatedData);
     },
@@ -50,7 +50,7 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
             />
           </div>
 
-          {/* Date and Time */}
+          {/* Date, Start Time, and End Time */}
           <div className="flex flex-row gap-3">
             {/* Date */}
             <div className="w-1/2">
@@ -65,22 +65,34 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
               />
             </div>
 
-            {/* Time */}
+            {/* Start Time */}
             <div className="w-1/2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Time
+                Start Time
               </label>
               <input
                 type="time"
-                name="time"
-                defaultValue={editingEvent.time}
+                name="startTime"
+                defaultValue={editingEvent.startTime}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               />
             </div>
           </div>
 
-          {/* Location and Status */}
           <div className="flex flex-row gap-3">
+            {/* End Time */}
+            <div className="w-1/2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Time
+              </label>
+              <input
+                type="time"
+                name="endTime"
+                defaultValue={editingEvent.endTime}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+            </div>
+
             {/* Category */}
             <div className="w-1/2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -100,35 +112,21 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
                 <option value="youth">Youth & Children</option>
               </select>
             </div>
-
-            {/* Status */}
-            <div className="w-1/2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Status
-              </label>
-              <select
-                name="status"
-                defaultValue={editingEvent.status}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              >
-                <option value="ongoing">Ongoing</option>
-                <option value="upcoming">Upcoming</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
           </div>
 
-          {/* Location */}
-          <div className="w-full">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Location
-            </label>
-            <input
-              type="text"
-              name="location"
-              defaultValue={editingEvent.location}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-            />
+          <div className="flex flex-row gap-3">
+            {/* Location */}
+            <div className="w-full">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Location
+              </label>
+              <input
+                type="text"
+                name="location"
+                defaultValue={editingEvent.location}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
+            </div>
           </div>
         </div>
 

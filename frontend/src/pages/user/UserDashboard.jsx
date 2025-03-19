@@ -9,14 +9,14 @@ import MyHelpRequests from "../../components/dashboard/MyHelpRequests";
 
 // Tab data defined as a constant
 const tabs = [
-  { id: "history", label: "History", icon: FaHistory },
-  { id: "upcoming", label: "Upcoming Events", icon: FaCalendar },
   { id: "events", label: "Events", icon: FaList },
+  { id: "upcoming", label: "Upcoming Events", icon: FaCalendar },
   { id: "helpRequest", label: "Help Requests", icon: FaHandsHelping },
+  { id: "history", label: "History", icon: FaHistory },
 ];
 
 const UserDashboard = () => {
-  const [activeTab, setActiveTab] = useState("history");
+  const [activeTab, setActiveTab] = useState("events");
   const currentUser = useSelector((state) => state.auth.user);
 
   const myHelpRequests = [
@@ -56,15 +56,14 @@ const UserDashboard = () => {
 
           {/* Tab Content */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            {activeTab === "history" && <VolunteerHistory user={currentUser} />}
+            {activeTab === "events" && <MyEvents user={currentUser} />}
 
             {activeTab === "upcoming" && <UpcomingEvents user={currentUser} />}
-
-            {activeTab === "events" && <MyEvents user={currentUser} />}
 
             {activeTab === "helpRequest" && (
               <MyHelpRequests events={myHelpRequests} />
             )}
+            {activeTab === "history" && <VolunteerHistory user={currentUser} />}
           </div>
         </div>
       </div>

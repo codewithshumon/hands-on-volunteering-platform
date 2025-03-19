@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable no-unused-vars */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FaSearch, FaPlus } from "react-icons/fa";
 
 import Modal from "../../components/modal/Modal";
@@ -11,6 +11,11 @@ import EventDetailsView from "../../components/events/EventDetailsView";
 
 const EventsPage = () => {
   const { fetchData, resData: events, loading, error } = useApi();
+
+  // Function to fetch events
+  const fetchEvents = useCallback(() => {
+    fetchData("/event/get-all-events");
+  }, []);
 
   useEffect(() => {
     fetchData("/event/get-all-events");
@@ -88,6 +93,7 @@ const EventsPage = () => {
               key={event.id}
               event={event}
               onSelect={setSelectedEvent}
+              onEventJoin={fetchEvents}
             />
           ))}
       </div>
@@ -97,12 +103,16 @@ const EventsPage = () => {
         isOpen={showCreateModal}
         onModalClose={() => setShowCreateModal(false)}
       >
-        <EventCreationForm onCancel={() => setShowCreateModal(false)} />
+        <EventCreationForm
+          onCancel={() => setShowCreateModal(false)}
+          onEventCreated={fetchEvents}
+        />
       </Modal>
 
       {/* Event Details Modal */}
       {selectedEvent && (
         <EventDetailsView
+          onEventLeave={fetchEvents}
           event={selectedEvent}
           onClose={() => {
             setSelectedEvent(null);

@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 import useApi from "../../hooks/useApi"; // Import the useApi hook
 
-const EventDetailsView = ({ event, onClose }) => {
+const EventDetailsView = ({ event, onClose, onEventLeave }) => {
   const { updateData, loading } = useApi(); // Use the useApi hook
   const currentUser = useSelector((state) => state.auth.user);
 
@@ -28,6 +28,9 @@ const EventDetailsView = ({ event, onClose }) => {
     try {
       await updateData(`/event/leave/${event._id}`, "POST");
 
+      if (onEventLeave) {
+        onEventLeave();
+      }
       onClose(); // Close the modal after leaving
     } catch (err) {
       console.error("Error leaving event:", err.message);
@@ -84,7 +87,8 @@ const EventDetailsView = ({ event, onClose }) => {
                 <div className="flex items-center gap-3">
                   <FaClock className="text-blue-500 w-5 h-5" />
                   <p className="text-gray-700">
-                    <strong>Time:</strong> {formatTime(event.time)}
+                    <strong>Time:</strong> {formatTime(event.startTime)} -{" "}
+                    {formatTime(event.endTime)}
                   </p>
                 </div>
 
@@ -140,7 +144,7 @@ const EventDetailsView = ({ event, onClose }) => {
           {isJoined && (
             <div className="mt-8">
               <button
-                className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+                className="w-full bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 flex items-center justify-center gap-2 cursor-pointer"
                 onClick={handleLeave}
                 disabled={loading}
               >

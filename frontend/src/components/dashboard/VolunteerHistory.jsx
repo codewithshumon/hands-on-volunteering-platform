@@ -14,9 +14,7 @@ const VolunteerHistory = ({ user }) => {
 
   // Fetching events with status: upcoming
   useEffect(() => {
-    fetchData(
-      `/event/get-all-events?status=completed&status=cancelled&userId=${user._id}`
-    );
+    fetchData(`/event/get-all-events?status=completed&userId=${user._id}`);
   }, [user._id, fetchData]);
 
   console.log("[events in VolunteerHistory]", events);
@@ -67,7 +65,7 @@ const VolunteerHistory = ({ user }) => {
                 </div>
                 <div className="flex items-center">
                   <FaClock className="mr-2 text-amber-600" />
-                  <p>Hours: {event.hours}</p>
+                  <p>Hours: {event.eventHours}</p>
                 </div>
                 <div className="flex items-center">
                   <FaMapMarkerAlt className="mr-2 text-amber-600" />

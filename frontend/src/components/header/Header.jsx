@@ -106,7 +106,8 @@ const Header = () => {
             <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center text-gray-700 hover:text-blue-600"
+                className="flex items-center text-gray-700 hover:text-blue-600 cursor-pointer
+                "
               >
                 {token && currentUser ? (
                   <div>
