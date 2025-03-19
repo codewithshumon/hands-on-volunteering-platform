@@ -1,17 +1,23 @@
 import { useState } from "react";
-import {
-  FaHistory,
-  FaCalendar,
-  FaSearch,
-  FaList,
-  FaHandsHelping,
-} from "react-icons/fa";
+import { useSelector } from "react-redux";
+import { FaHistory, FaCalendar, FaList, FaHandsHelping } from "react-icons/fa";
 import Profile from "../../components/dashboard/Profile";
 import UpcomingEvents from "../../components/dashboard/UpcomingEvents";
 import VolunteerHistory from "../../components/dashboard/VolunteerHistory";
+import MyEvents from "../../components/dashboard/MyEvents";
+import MyHelpRequests from "../../components/dashboard/MyHelpRequests";
+
+// Tab data defined as a constant
+const tabs = [
+  { id: "history", label: "History", icon: FaHistory },
+  { id: "upcoming", label: "Upcoming Events", icon: FaCalendar },
+  { id: "events", label: "Events", icon: FaList },
+  { id: "helpRequest", label: "Help Requests", icon: FaHandsHelping },
+];
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("history");
+  const currentUser = useSelector((state) => state.auth.user);
 
   // Mock data
   const volunteerHistory = [
@@ -34,15 +40,6 @@ const UserDashboard = () => {
     },
   ];
 
-  const myEvents = [
-    {
-      id: 7,
-      title: "Community Garden",
-      date: "2023-05-01",
-      location: "Local Park",
-    },
-  ];
-
   const myHelpRequests = [
     {
       id: 8,
@@ -62,16 +59,7 @@ const UserDashboard = () => {
         <div className="md:col-span-2">
           {/* Tabs Navigation */}
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-6">
-            {[
-              { id: "history", label: "History", icon: FaHistory },
-              { id: "upcoming", label: "Upcoming Events", icon: FaCalendar },
-              { id: "events", label: "Events", icon: FaList },
-              {
-                id: "helpRequest",
-                label: "Help Requests",
-                icon: FaHandsHelping,
-              },
-            ].map((tab) => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
@@ -97,10 +85,10 @@ const UserDashboard = () => {
               <UpcomingEvents events={upcomingEvents} />
             )}
 
-            {activeTab === "events" && <UpcomingEvents events={myEvents} />}
+            {activeTab === "events" && <MyEvents user={currentUser} />}
 
             {activeTab === "helpRequest" && (
-              <UpcomingEvents events={myHelpRequests} />
+              <MyHelpRequests events={myHelpRequests} />
             )}
           </div>
         </div>

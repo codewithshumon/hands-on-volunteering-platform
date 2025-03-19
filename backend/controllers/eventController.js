@@ -71,7 +71,7 @@ export const createEvent = async (req, res) => {
 export const updateEvent = async (req, res) => {
   const { eventId } = req.params;
   const updates = req.body;
-  const userId = req.user._id;
+  const userId = req.user.id;
 
   try {
     const event = await Event.findById(eventId);
