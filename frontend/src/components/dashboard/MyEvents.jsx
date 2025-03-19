@@ -11,9 +11,13 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import useApi from "../../hooks/useApi"; // Import the useApi hook
+import Modal from "../modal/Modal";
+import EditEvents from "../events/EditEvents";
 
 const MyEvents = ({ user }) => {
   const [events, setEvents] = useState([]); // State to store fetched events
+  const [showModal, setShowModal] = useState(false); // State to show modal
+  const [editingEvent, setEditingEvent] = useState(null); // State to track the event being edited
   const { resData, loading, error, fetchData, updateData } = useApi(); // Destructure useApi hook
 
   // Fetch events when the component mounts
@@ -28,24 +32,43 @@ const MyEvents = ({ user }) => {
     }
   }, [resData]);
 
-  console.log("[events in myEvents]", events);
-
   // Handle Edit Event
-  const handleEdit = useCallback(
-    (eventId) => {
-      console.log("Edit event with ID:", eventId);
-      updateData(`/event/update/${eventId}`, "PUT");
+  const handleEdit = useCallback((event) => {
+    setEditingEvent(event); // Set the event to be edited
+    setShowModal(true);
+  }, []);
+
+  // Handle Cancel Edit
+  const handleCancelEdit = useCallback(() => {
+    setEditingEvent(null); // Clear the editing state
+    setShowModal(false);
+  }, []);
+
+  // Handle Update Event
+  const handleUpdate = useCallback(
+    async (eventId, updatedData) => {
+      try {
+        await updateData(`/event/update/${eventId}`, "PUT", updatedData);
+        setEditingEvent(null); // Clear the editing state
+        fetchData(`/event/get-my-events/${user._id}`); // Refresh the events list
+      } catch (err) {
+        console.error("Error updating event:", err);
+      }
     },
-    [updateData]
+    [updateData, fetchData, user._id]
   );
 
   // Handle Delete Event
   const handleDelete = useCallback(
-    (eventId) => {
-      console.log("Delete event with ID:", eventId);
-      updateData(`/event/delete/${eventId}`, "DELETE");
+    async (eventId) => {
+      try {
+        await updateData(`/event/delete/${eventId}`, "DELETE");
+        fetchData(`/event/get-my-events/${user._id}`); // Refresh the events list
+      } catch (err) {
+        console.error("Error deleting event:", err);
+      }
     },
-    [updateData]
+    [updateData, fetchData, user._id]
   );
 
   // Handle loading and error states
@@ -81,7 +104,7 @@ const MyEvents = ({ user }) => {
                 <div className="flex space-x-3">
                   {/* Edit Button */}
                   <button
-                    onClick={() => handleEdit(event._id)}
+                    onClick={() => handleEdit(event)}
                     className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
                   >
                     <FaEdit className="w-5 h-5" />
@@ -151,6 +174,17 @@ const MyEvents = ({ user }) => {
           ))
         )}
       </div>
+
+      {/* Edit Event Modal */}
+      {editingEvent && showModal && (
+        <Modal isOpen={showModal} onModalClose={handleCancelEdit}>
+          <EditEvents
+            editingEvent={editingEvent}
+            handleCancelEdit={handleCancelEdit}
+            handleUpdate={handleUpdate}
+          />
+        </Modal>
+      )}
     </div>
   );
 };

@@ -183,7 +183,7 @@ export const leaveEvent = async (req, res) => {
 
 export const deleteEvent = async (req, res) => {
   const { eventId } = req.params;
-  const userId = req.user._id;
+  const userId = req.user.id;
 
   try {
     const event = await Event.findById(eventId);
