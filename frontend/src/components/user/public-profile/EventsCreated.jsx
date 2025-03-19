@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import useApi from "../../../hooks/useApi";
 import {
   FaCalendar,
@@ -7,12 +7,13 @@ import {
   FaMapMarkerAlt,
   FaTimes,
 } from "react-icons/fa"; // Added FaTimes for the close button
-import { Link } from "react-router-dom"; // Added Link for navigation
+import EventDetailsView from "../../events/EventDetailsView";
 
 const EventsCreated = ({ userId }) => {
   const { resData, loading, error, fetchData } = useApi();
   const [events, setEvents] = useState([]);
   const [isOpen, setIsOpen] = useState(false); // State to toggle event list visibility
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   // Fetch events when the component mounts
   useEffect(() => {
@@ -28,6 +29,12 @@ const EventsCreated = ({ userId }) => {
       setEvents(sortedEvents);
     }
   }, [resData]);
+
+  const handleView = useCallback((event) => {
+    setSelectedEvent(event);
+  }, []);
+
+  console.log("[selectedEvent]", selectedEvent);
 
   // Toggle event list visibility
   const toggleEvents = () => {
@@ -82,12 +89,23 @@ const EventsCreated = ({ userId }) => {
                     </div>
                   </div>
                   {/* View Details Button */}
-                  <button className="border border-blue-500 text-gray-800 px-4 py-1 rounded-lg hover:text-white hover:bg-blue-600 flex items-center gap-2 cursor-pointer">
+                  <button
+                    onClick={handleView(event)}
+                    className="border border-blue-500 text-gray-800 px-4 py-1 rounded-lg hover:text-white hover:bg-blue-600 flex items-center gap-2 cursor-pointer"
+                  >
                     <FaEye size={16} /> {/* View icon */}
                     View
                   </button>
                 </div>
               ))}
+              {/* {selectedEvent && (
+                <EventDetailsView
+                  event={selectedEvent}
+                  onClose={() => {
+                    setSelectedEvent(null);
+                  }}
+                />
+              )} */}
               {/* Close Button */}
               <div className="flex justify-center mt-6">
                 <button

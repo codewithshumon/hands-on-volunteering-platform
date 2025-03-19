@@ -18,7 +18,6 @@ const EventsPage = () => {
 
   console.log("[events in EventPage]", events);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEventCardModal, setShowEventCardModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
@@ -89,7 +88,6 @@ const EventsPage = () => {
               key={event.id}
               event={event}
               onSelect={setSelectedEvent}
-              modalClose={setShowEventCardModal}
             />
           ))}
       </div>
@@ -105,7 +103,6 @@ const EventsPage = () => {
           event={selectedEvent}
           onClose={() => {
             setSelectedEvent(null);
-            setShowEventCardModal(false);
           }}
         />
       )}

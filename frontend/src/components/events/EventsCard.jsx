@@ -23,7 +23,7 @@ const categoryMapping = {
   youth: "Youth & Children",
 };
 
-const EventCard = ({ event, onSelect, modalClose }) => {
+const EventCard = ({ event, onSelect }) => {
   const { updateData } = useApi();
   const currentUser = useSelector((state) => state.auth.user);
 
@@ -34,8 +34,7 @@ const EventCard = ({ event, onSelect, modalClose }) => {
 
   const eventCardHandler = useCallback(() => {
     onSelect(event);
-    modalClose(true);
-  }, [event, onSelect, modalClose]);
+  }, [event, onSelect]);
 
   const handleJoin = useCallback(async () => {
     try {

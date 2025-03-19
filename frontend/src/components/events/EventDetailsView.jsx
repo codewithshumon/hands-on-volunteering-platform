@@ -43,7 +43,7 @@ const EventDetailsView = ({ event, onClose }) => {
           <div className="flex justify-between items-start mb-8">
             <h2 className="text-3xl font-bold text-gray-800">{event.title}</h2>
             <button
-              className="text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-gray-500 hover:text-gray-700 transition-colors cursor-pointer"
               onClick={onClose}
             >
               ✕
