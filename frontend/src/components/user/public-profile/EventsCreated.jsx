@@ -90,7 +90,7 @@ const EventsCreated = ({ userId }) => {
                   </div>
                   {/* View Details Button */}
                   <button
-                    onClick={handleView(event)}
+                    onClick={() => handleView(event)}
                     className="border border-blue-500 text-gray-800 px-4 py-1 rounded-lg hover:text-white hover:bg-blue-600 flex items-center gap-2 cursor-pointer"
                   >
                     <FaEye size={16} /> {/* View icon */}
@@ -98,14 +98,14 @@ const EventsCreated = ({ userId }) => {
                   </button>
                 </div>
               ))}
-              {/* {selectedEvent && (
+              {selectedEvent && (
                 <EventDetailsView
                   event={selectedEvent}
                   onClose={() => {
                     setSelectedEvent(null);
                   }}
                 />
-              )} */}
+              )}
               {/* Close Button */}
               <div className="flex justify-center mt-6">
                 <button

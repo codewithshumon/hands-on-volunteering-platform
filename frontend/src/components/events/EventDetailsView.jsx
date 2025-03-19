@@ -54,8 +54,26 @@ const EventDetailsView = ({ event, onClose }) => {
           <div className="grid md:grid-cols-2 gap-8">
             {/* Left column: Event description and details */}
             <div>
-              <p className="text-gray-600 mb-6 text-lg">{event.description}</p>
-              <div className="space-y-4">
+              <div className="flex items-center pb-2">
+                <Link to={`/user/profile/${event.createdBy._id}`}>
+                  <img
+                    src={event.createdBy.profileImage}
+                    alt={event.createdBy.name}
+                    className="w-5 h-5 rounded-full object-cover"
+                  />
+                </Link>
+                <span className="ml-2 text-sm text-gray-600">
+                  Created by{" "}
+                  <Link
+                    to={`/user/profile/${event.createdBy._id}`}
+                    className="font-bold hover:underline"
+                  >
+                    {event.createdBy.name}
+                  </Link>
+                </span>
+              </div>
+              <p className="text-gray-600 mb-4 text-md">{event.description}</p>
+              <div className="space-y-1">
                 <div className="flex items-center gap-3">
                   <FaCalendarAlt className="text-blue-500 w-5 h-5" />
                   <p className="text-gray-700">
@@ -69,12 +87,7 @@ const EventDetailsView = ({ event, onClose }) => {
                     <strong>Time:</strong> {formatTime(event.time)}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <FaMapMarkerAlt className="text-blue-500 w-5 h-5" />
-                  <p className="text-gray-700">
-                    <strong>Location:</strong> {event.location}
-                  </p>
-                </div>
+
                 <div className="flex items-center gap-3">
                   <FaUsers className="text-blue-500 w-5 h-5" />
                   <p className="text-gray-700">
@@ -83,13 +96,22 @@ const EventDetailsView = ({ event, onClose }) => {
                   </p>
                 </div>
               </div>
+              <div className=" pt-4 flex items-center gap-3">
+                <FaMapMarkerAlt className="text-blue-500 w-8 h-8" />
+                <p className="text-gray-700">
+                  <strong>Location:</strong> {event.location}
+                </p>
+              </div>
             </div>
 
             {/* Right column: Attendees list */}
             <div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-6">
-                Attendees
+              <h3 className="text-xl font-semibold text-gray-800 mb-6 underline">
+                Attendees List
               </h3>
+              <p>
+                {event.attendees.length === 0 ? "No one joined yet." : null}
+              </p>
               <div className="grid grid-cols-2 gap-4">
                 {event.attendees.map((attendee, index) => (
                   <div

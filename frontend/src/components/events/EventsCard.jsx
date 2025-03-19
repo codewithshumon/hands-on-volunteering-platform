@@ -67,7 +67,7 @@ const EventCard = ({ event, onSelect }) => {
             </span>
           </div>
           <div className="flex items-center">
-            <Link to={`/users/${event.createdBy._id}`}>
+            <Link to={`/user/profile/${event.createdBy._id}`}>
               <img
                 src={event.createdBy.profileImage}
                 alt={event.createdBy.name}

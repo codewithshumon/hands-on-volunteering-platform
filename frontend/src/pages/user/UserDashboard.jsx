@@ -1,14 +1,17 @@
 import { useState } from "react";
-import { FaHistory, FaCalendar, FaSearch } from "react-icons/fa";
+import {
+  FaHistory,
+  FaCalendar,
+  FaSearch,
+  FaList,
+  FaHandsHelping,
+} from "react-icons/fa";
 import Profile from "../../components/dashboard/Profile";
 import UpcomingEvents from "../../components/dashboard/UpcomingEvents";
 import VolunteerHistory from "../../components/dashboard/VolunteerHistory";
-import DiscoverEvents from "../../components/dashboard/DiscoverEvents";
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("history");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
 
   // Mock data
   const volunteerHistory = [
@@ -31,18 +34,21 @@ const UserDashboard = () => {
     },
   ];
 
-  const allEvents = [
+  const myEvents = [
     {
-      id: 5,
-      title: "Homeless Shelter Help",
-      date: "2023-04-20",
-      category: "Humanitarian",
+      id: 7,
+      title: "Community Garden",
+      date: "2023-05-01",
+      location: "Local Park",
     },
+  ];
+
+  const myHelpRequests = [
     {
-      id: 6,
-      title: "Animal Rescue Support",
-      date: "2023-04-22",
-      category: "Animals",
+      id: 8,
+      title: "Help Needed: Elderly Care",
+      date: "2023-05-05",
+      location: "Senior Center",
     },
   ];
 
@@ -55,11 +61,16 @@ const UserDashboard = () => {
         {/* Right Side - Content */}
         <div className="md:col-span-2">
           {/* Tabs Navigation */}
-          <div className="flex space-x-4 mb-6">
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 mb-6">
             {[
-              { id: "history", label: "Volunteer History", icon: FaHistory },
+              { id: "history", label: "History", icon: FaHistory },
               { id: "upcoming", label: "Upcoming Events", icon: FaCalendar },
-              { id: "discover", label: "Discover", icon: FaSearch },
+              { id: "events", label: "Events", icon: FaList },
+              {
+                id: "helpRequest",
+                label: "Help Requests",
+                icon: FaHandsHelping,
+              },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -86,14 +97,10 @@ const UserDashboard = () => {
               <UpcomingEvents events={upcomingEvents} />
             )}
 
-            {activeTab === "discover" && (
-              <DiscoverEvents
-                events={allEvents}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-              />
+            {activeTab === "events" && <UpcomingEvents events={myEvents} />}
+
+            {activeTab === "helpRequest" && (
+              <UpcomingEvents events={myHelpRequests} />
             )}
           </div>
         </div>
