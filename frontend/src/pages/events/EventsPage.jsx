@@ -93,7 +93,10 @@ const EventsPage = () => {
       </div>
 
       {/* Modal for Creating Events */}
-      <Modal isOpen={showCreateModal} setCloseModalHandler={setShowCreateModal}>
+      <Modal
+        isOpen={showCreateModal}
+        onModalClose={() => setShowCreateModal(false)}
+      >
         <EventCreationForm onCancel={() => setShowCreateModal(false)} />
       </Modal>
 

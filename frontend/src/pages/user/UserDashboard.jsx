@@ -19,27 +19,6 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("history");
   const currentUser = useSelector((state) => state.auth.user);
 
-  // Mock data
-  const volunteerHistory = [
-    { id: 1, title: "Food Distribution", date: "2023-03-15", hours: 4 },
-    { id: 2, title: "Beach Cleanup", date: "2023-02-28", hours: 6 },
-  ];
-
-  const upcomingEvents = [
-    {
-      id: 3,
-      title: "Tutoring Session",
-      date: "2023-04-10",
-      location: "City Library",
-    },
-    {
-      id: 4,
-      title: "Park Restoration",
-      date: "2023-04-15",
-      location: "Central Park",
-    },
-  ];
-
   const myHelpRequests = [
     {
       id: 8,
@@ -77,13 +56,9 @@ const UserDashboard = () => {
 
           {/* Tab Content */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            {activeTab === "history" && (
-              <VolunteerHistory history={volunteerHistory} />
-            )}
+            {activeTab === "history" && <VolunteerHistory user={currentUser} />}
 
-            {activeTab === "upcoming" && (
-              <UpcomingEvents events={upcomingEvents} />
-            )}
+            {activeTab === "upcoming" && <UpcomingEvents user={currentUser} />}
 
             {activeTab === "events" && <MyEvents user={currentUser} />}
 

@@ -13,6 +13,7 @@ import {
 import useApi from "../../hooks/useApi"; // Import the useApi hook
 import Modal from "../modal/Modal";
 import EditEvents from "../events/EditEvents";
+import formatTime from "../../utils/formatTime";
 
 const MyEvents = ({ user }) => {
   const [events, setEvents] = useState([]); // State to store fetched events
@@ -79,7 +80,7 @@ const MyEvents = ({ user }) => {
   if (error) {
     return (
       <p className="text-center text-red-500">
-        Error fetching your events: {error}
+        Ops! Something went wrong. Try again leter.
       </p>
     );
   }
@@ -155,7 +156,7 @@ const MyEvents = ({ user }) => {
                 {/* Time */}
                 <div className="flex items-center space-x-3">
                   <FaClock className="w-5 h-5 text-blue-600" />
-                  <p>Time: {event.time}</p>
+                  <p>Time: {formatTime(event.time)}</p>
                 </div>
 
                 {/* Location */}

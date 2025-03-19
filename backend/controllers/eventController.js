@@ -1,17 +1,56 @@
+import mongoose from "mongoose";
+const { Types } = mongoose;
+
 import Event from "../models/EventSchema.js";
 import User from "../models/UserSchema.js";
 
 export const getAllEvents = async (req, res) => {
+  const { status, userId } = req.query;
+
   try {
-    const events = await Event.find().populate(
+    // Define the query object
+    const query = {};
+
+    // Add status to the query if provided
+    if (status) {
+      // If status is an array (multiple statuses), use $in operator
+      if (Array.isArray(status)) {
+        query.status = { $in: status }; // Filter for multiple statuses
+      } else {
+        query.status = status; // Filter for a single status
+      }
+    }
+    // Add userId to the query if provided (to check if the user has joined the event)
+    if (userId) {
+      // Validate userId before converting to ObjectId
+      if (!mongoose.isValidObjectId(userId)) {
+        return res.status(400).json({
+          message: "Invalid userId format",
+        });
+      }
+      // Use dot notation to query nested field attendees.userId
+      query["attendees.userId"] = new Types.ObjectId(userId);
+    }
+
+    // Fetch events based on the query
+    const events = await Event.find(query).populate(
       "createdBy",
       "name profileImage _id"
     ); // Populate creator details
-    res
-      .status(200)
-      .json({ message: "Events fetched successfully", data: events });
+
+    console.log("[events in get all events]", events);
+
+    res.status(200).json({
+      message: "Events fetched successfully",
+      data: events,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error fetching events", error });
+    console.log("[error in get all events]", error);
+
+    res.status(500).json({
+      message: "Error fetching events",
+      error: error.message, // Send only the error message for clarity
+    });
   }
 };
 
@@ -28,6 +67,28 @@ export const getMyEvents = async (req, res) => {
       .json({ message: "Your events fetched successfully", data: events });
   } catch (error) {
     res.status(500).json({ message: "Error fetching your events", error });
+  }
+};
+
+export const getMyEventsByStatus = async (req, res) => {
+  const { userId } = req.params;
+  const { status } = req.query; // Get status from query parameters
+
+  try {
+    // Fetch events for the user based on the provided status
+    const events = await Event.find({
+      createdBy: userId,
+      status: status, // Filter by dynamic status
+    }).populate("createdBy", "name profileImage _id"); // Populate creator details
+
+    res.status(200).json({
+      message: `Your ${status} events fetched successfully`,
+      data: events,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: `Error fetching your ${status} events`, error });
   }
 };
 

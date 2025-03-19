@@ -36,7 +36,7 @@ const EventDetailsView = ({ event, onClose }) => {
   };
 
   return (
-    <Modal isOpen={true} setCloseModalHandler={onClose}>
+    <Modal isOpen={true} onModalClose={onClose}>
       <div className="p-4">
         <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-8 w-full max-w-2xl shadow-2xl">
           {/* Header with title and close button */}
