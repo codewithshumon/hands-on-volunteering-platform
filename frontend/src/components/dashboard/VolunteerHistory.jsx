@@ -82,7 +82,8 @@ const VolunteerHistory = ({ user }) => {
                           : "text-yellow-600"
                       }`}
                     >
-                      {event.status}
+                      {event.status.charAt(0).toUpperCase() +
+                        event.status.slice(1).toLowerCase()}
                     </span>
                   </p>
                 </div>

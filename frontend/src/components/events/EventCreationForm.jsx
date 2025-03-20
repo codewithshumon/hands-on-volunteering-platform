@@ -32,7 +32,6 @@ const EventCreationForm = ({ onCancel, onEventCreated }) => {
       onCancel();
     } catch (err) {
       console.error("Error creating event:", err);
-      // Handle the error (e.g., show a toast or error message)
     }
   };
 

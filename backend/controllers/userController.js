@@ -16,6 +16,7 @@ export const getSingleUser = async (req, res) => {
       data: user,
     });
   } catch (err) {
+    console.log("[ERROR in getSingleUser]", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -49,7 +50,7 @@ export const updateUser = async (req, res) => {
       data: updatedUser,
     });
   } catch (err) {
-    console.error("Error updating user:", err);
+    console.log("[ERROR in updateUser]", err);
     res.status(500).json({ message: "Server error" });
   }
 };

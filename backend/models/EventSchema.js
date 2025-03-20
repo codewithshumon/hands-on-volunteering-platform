@@ -74,12 +74,16 @@ const EventSchema = new mongoose.Schema({
 
 // Pre-save hook to calculate eventHours
 EventSchema.pre("save", function (next) {
+  if (this.startTime >= this.endTime) {
+    throw new Error("End time must be after start time.");
+  }
+
   // Calculate the difference between startTime and endTime in hours
-  const start = this.startTime.getTime(); // Get start time in milliseconds
-  const end = this.endTime.getTime(); // Get end time in milliseconds
+  const start = this.startTime.getTime();
+  const end = this.endTime.getTime();
 
   // Calculate the difference in hours
-  const diffHours = (end - start) / (1000 * 60 * 60); // Convert milliseconds to hours
+  const diffHours = (end - start) / (1000 * 60 * 60);
 
   // Assign the calculated hours to eventHours
   this.eventHours = diffHours;

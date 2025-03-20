@@ -60,6 +60,7 @@ export const signup = async (req, res, next) => {
       message: "Verification code sent to email",
     });
   } catch (err) {
+    console.log("[ERROR in singup]", err);
     next(err);
   }
 };
@@ -93,6 +94,7 @@ export const verifyEmail = async (req, res, next) => {
       message: "Email verified successfully",
     });
   } catch (err) {
+    console.log("[ERROR in verifyEmail]", err);
     next(err);
   }
 };
@@ -139,6 +141,7 @@ export const resendVerificationCode = async (req, res, next) => {
       message: "New verification code sent",
     });
   } catch (err) {
+    console.log("[ERROR in resendVerificationEmail]", err);
     next(err);
   }
 };
@@ -199,6 +202,7 @@ export const login = async (req, res, next) => {
       data: rest,
     });
   } catch (err) {
+    console.log("[ERROR in login]", err);
     next(err);
   }
 };
@@ -218,6 +222,7 @@ const verifyToken = (req, res, next) => {
 
     next();
   } catch (err) {
+    console.log("[ERROR in tokenVerify]", err);
     return res.status(401).json({ message: "Invalid token" });
   }
 };
@@ -260,6 +265,7 @@ export const resetPassword = async (req, res, next) => {
       message: "Password updated successfully",
     });
   } catch (err) {
+    console.log("[ERROR in resetPassword]", err);
     next(err);
   }
 };

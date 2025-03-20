@@ -49,7 +49,7 @@ export const getAllEvents = async (req, res) => {
       data: events,
     });
   } catch (error) {
-    console.log("[error in get all events]", error);
+    console.log("[ERROR in getAllEvents]", error);
 
     res.status(500).json({
       message: "Error fetching events",
@@ -70,29 +70,8 @@ export const getMyEvents = async (req, res) => {
       .status(200)
       .json({ message: "Your events fetched successfully", data: events });
   } catch (error) {
+    console.log("[ERROR in getMyEvens]", error);
     res.status(500).json({ message: "Error fetching your events", error });
-  }
-};
-
-export const getMyEventsByStatus = async (req, res) => {
-  const { userId } = req.params;
-  const { status } = req.query; // Get status from query parameters
-
-  try {
-    // Fetch events for the user based on the provided status
-    const events = await Event.find({
-      createdBy: userId,
-      status: status, // Filter by dynamic status
-    }).populate("createdBy", "name profileImage _id"); // Populate creator details
-
-    res.status(200).json({
-      message: `Your ${status} events fetched successfully`,
-      data: events,
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: `Error fetching your ${status} events`, error });
   }
 };
 
@@ -115,6 +94,13 @@ export const createEvent = async (req, res) => {
     const startDateTime = new Date(`${date}T${startTime}`);
     const endDateTime = new Date(`${date}T${endTime}`);
 
+    // Validate that end time is after start time
+    if (endDateTime <= startDateTime) {
+      return res.status(400).json({
+        message: "End time must be after start time.",
+      });
+    }
+
     // Create a new event
     const event = new Event({
       title,
@@ -136,10 +122,11 @@ export const createEvent = async (req, res) => {
       data: event,
     });
   } catch (error) {
-    console.error("[error in createEvent]", error);
+    console.log("[ERROR in createEvent]", error);
+
+    // Send the error message to the frontend
     res.status(500).json({
-      message: "Error creating event",
-      error: error.message,
+      message: error.message || "An error occurred while creating the event.",
     });
   }
 };
@@ -171,6 +158,8 @@ export const updateEvent = async (req, res) => {
       .status(200)
       .json({ message: "Event updated successfully", updatedEvent });
   } catch (error) {
+    console.log("[ERROR in updateEvents]", error);
+
     res.status(500).json({ message: "Error updating event", error });
   }
 };
@@ -190,6 +179,11 @@ export const joinEvent = async (req, res) => {
     // Check if the user is the creator of the event
     if (event.createdBy.toString() === userId.toString()) {
       return res.status(400).json({ message: "You can't join your event" });
+    }
+
+    // Check if event is alread ongoing or completed
+    if (event.status === "ongoing" || "completed") {
+      return res.status(400).json({ message: "Event is close" });
     }
 
     // Check if the user has already joined the event
@@ -219,7 +213,7 @@ export const joinEvent = async (req, res) => {
 
     res.status(200).json({ message: "Joined event successfully", event });
   } catch (error) {
-    console.log("[joinEvent]", joinEvent);
+    console.log("[ERROR in joinEvent]", error);
 
     res.status(500).json({ message: "Error joining event", error });
   }
@@ -251,7 +245,7 @@ export const leaveEvent = async (req, res) => {
 
     res.status(200).json({ message: "Left event successfully", event });
   } catch (error) {
-    console.log("[error leave]", error);
+    console.log("[ERROR in leaveEvent]", error);
 
     res.status(500).json({ message: "Error leaving event", error });
   }
@@ -284,6 +278,7 @@ export const deleteEvent = async (req, res) => {
 
     res.status(200).json({ message: "Event deleted successfully" });
   } catch (error) {
+    console.log("[ERROR in deleteEvent]", error);
     res.status(500).json({ message: "Error deleting event", error });
   }
 };

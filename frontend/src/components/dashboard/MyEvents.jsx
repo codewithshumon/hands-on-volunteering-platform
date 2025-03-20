@@ -6,21 +6,23 @@ import {
   FaInfoCircle,
   FaCheckCircle,
   FaHourglassStart,
-  FaTimesCircle,
   FaEdit,
   FaTrash,
-  FaCheck, // Add this icon for "completed"
+  FaCheck,
+  FaEye, // Add this icon for "completed"
 } from "react-icons/fa";
 import useApi from "../../hooks/useApi";
 import Modal from "../modal/Modal";
 import EditEvents from "../events/EditEvents";
 import formatTime from "../../utils/formatTime";
+import EventDetailsView from "../events/EventDetailsView";
 
 const MyEvents = ({ user }) => {
+  const { resData, loading, error, fetchData, updateData } = useApi();
   const [events, setEvents] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
-  const { resData, loading, error, fetchData, updateData } = useApi();
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   // Fetch events when the component mounts
   useEffect(() => {
@@ -104,20 +106,33 @@ const MyEvents = ({ user }) => {
                   {event.title}
                 </h3>
                 <div className="flex space-x-3">
-                  {/* Edit Button */}
-                  <button
-                    onClick={() => handleEdit(event)}
-                    className="text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer"
-                  >
-                    <FaEdit className="w-5 h-5" />
-                  </button>
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => handleDelete(event._id)}
-                    className="text-red-600 hover:text-red-800 transition-colors duration-200 cursor-pointer"
-                  >
-                    <FaTrash className="w-5 h-5" />
-                  </button>
+                  {event.status === "ongoing" ||
+                  event.status === "completed" ? (
+                    <button
+                      onClick={() => setSelectedEvent(event)}
+                      className="flex items-center cursor-pointer"
+                    >
+                      <FaEye className="w-6 h-6 text-blue-500 hover:text-blue-700 " />{" "}
+                      {/* Larger icon */}
+                    </button>
+                  ) : (
+                    <>
+                      {/* Edit Button */}
+                      <button
+                        onClick={() => handleEdit(event)}
+                        className="text-blue-600 hover:text-blue-800 transition-colors duration-200 cursor-pointer"
+                      >
+                        <FaEdit className="w-5 h-5" />
+                      </button>
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => handleDelete(event._id)}
+                        className="text-red-600 hover:text-red-800 transition-colors duration-200 cursor-pointer"
+                      >
+                        <FaTrash className="w-5 h-5" />
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -131,9 +146,6 @@ const MyEvents = ({ user }) => {
                   {event.status === "upcoming" && (
                     <FaHourglassStart className="w-5 h-5 text-blue-600" />
                   )}
-                  {event.status === "cancelled" && (
-                    <FaTimesCircle className="w-5 h-5 text-red-600" />
-                  )}
                   {event.status === "completed" && (
                     <FaCheck className="w-5 h-5 text-purple-600" /> // Icon for "completed"
                   )}
@@ -143,8 +155,6 @@ const MyEvents = ({ user }) => {
                         ? "bg-green-100 text-green-700"
                         : event.status === "upcoming"
                         ? "bg-blue-100 text-blue-700"
-                        : event.status === "cancelled"
-                        ? "bg-gray-100 text-gray-700"
                         : "bg-purple-100 text-purple-700" // Style for "completed"
                     }`}
                   >
@@ -194,6 +204,14 @@ const MyEvents = ({ user }) => {
             handleUpdate={handleUpdate}
           />
         </Modal>
+      )}
+
+      {/* Event Details Modal */}
+      {selectedEvent && (
+        <EventDetailsView
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+        />
       )}
     </div>
   );

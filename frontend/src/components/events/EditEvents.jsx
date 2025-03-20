@@ -1,9 +1,13 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
+  const [error, setError] = useState("");
+
   const handleSubmit = useCallback(
     (e) => {
       e.preventDefault();
+      setError(""); // Clear previous errors
+
       const formData = new FormData(e.target);
       const updatedData = {
         title: formData.get("title"),
@@ -14,14 +18,51 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
         location: formData.get("location"),
         category: formData.get("category"),
       };
-      handleUpdate(editingEvent._id, updatedData);
+
+      // Validate startTime and endTime
+      if (updatedData.startTime >= updatedData.endTime) {
+        setError("End time must be after start time.");
+        return;
+      }
+
+      // Convert date and time strings to Date objects
+      const startDateTime = new Date(
+        `${updatedData.date}T${updatedData.startTime}`
+      );
+      const endDateTime = new Date(
+        `${updatedData.date}T${updatedData.endTime}`
+      );
+
+      // Ensure the dates are valid
+      if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+        setError("Invalid date or time format.");
+        return;
+      }
+
+      // Pass the updated data to the parent component
+      handleUpdate(editingEvent._id, {
+        ...updatedData,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime.toISOString(),
+      });
     },
     [handleUpdate, editingEvent._id]
   );
 
+  // Helper function to format time for input[type="time"]
+  const formatTimeForInput = (dateString) => {
+    const date = new Date(dateString);
+    return date.toTimeString().slice(0, 5); // Extract HH:MM
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md p-4 w-auto h-auto min-w-[90vw] sm:min-w-[80vw] md:min-w-[50vw]">
       <h3 className="text-lg font-semibold mb-3 text-gray-800">Edit Event</h3>
+      {error && (
+        <div className="mb-4 p-2 bg-red-100 text-red-600 rounded-md text-sm">
+          {error}
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="space-y-3">
           {/* Title */}
@@ -34,6 +75,7 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
               name="title"
               defaultValue={editingEvent.title}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              required
             />
           </div>
 
@@ -47,10 +89,11 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
               defaultValue={editingEvent.description}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
               rows="3"
+              required
             />
           </div>
 
-          {/* Date, Start Time, and End Time */}
+          {/* Date and Category */}
           <div className="flex flex-row gap-3">
             {/* Date */}
             <div className="w-1/2">
@@ -62,34 +105,7 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
                 name="date"
                 defaultValue={editingEvent.date.split("T")[0]}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              />
-            </div>
-
-            {/* Start Time */}
-            <div className="w-1/2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Time
-              </label>
-              <input
-                type="time"
-                name="startTime"
-                defaultValue={editingEvent.startTime}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-row gap-3">
-            {/* End Time */}
-            <div className="w-1/2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Time
-              </label>
-              <input
-                type="time"
-                name="endTime"
-                defaultValue={editingEvent.endTime}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                required
               />
             </div>
 
@@ -102,6 +118,7 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
                 name="category"
                 defaultValue={editingEvent.category}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                required
               >
                 <option value="environment">Environment</option>
                 <option value="education">Education</option>
@@ -114,8 +131,39 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
             </div>
           </div>
 
+          {/* Start Time and End Time */}
           <div className="flex flex-row gap-3">
-            {/* Location */}
+            {/* Start Time */}
+            <div className="w-1/2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Time
+              </label>
+              <input
+                type="time"
+                name="startTime"
+                defaultValue={formatTimeForInput(editingEvent.startTime)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                required
+              />
+            </div>
+
+            {/* End Time */}
+            <div className="w-1/2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Time
+              </label>
+              <input
+                type="time"
+                name="endTime"
+                defaultValue={formatTimeForInput(editingEvent.endTime)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Location */}
+          <div className="flex flex-row gap-3">
             <div className="w-full">
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Location
@@ -125,6 +173,7 @@ const EditEvents = ({ editingEvent, handleCancelEdit, handleUpdate }) => {
                 name="location"
                 defaultValue={editingEvent.location}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                required
               />
             </div>
           </div>
