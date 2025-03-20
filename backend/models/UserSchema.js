@@ -34,6 +34,10 @@ const UserSchema = new mongoose.Schema({
     type: [String],
     default: [],
   },
+  volunteerHours: {
+    type: Number,
+    default: 0, // Total volunteer hours
+  },
   volunteerHistory: [
     {
       eventId: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },

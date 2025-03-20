@@ -2,7 +2,8 @@ import { useState } from "react";
 import useApi from "../../hooks/useApi";
 
 const EventCreationForm = ({ onCancel, onEventCreated }) => {
-  const { updateData, loading, error } = useApi();
+  const { updateData, loading } = useApi();
+  const [errorText, setErrorText] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -19,9 +20,28 @@ const EventCreationForm = ({ onCancel, onEventCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Check if required fields are filled
+    if (!formData.date || !formData.startTime || !formData.endTime) {
+      setErrorText("Please fill in all required fields.");
+      return;
+    }
+
+    // Combine date with startTime and endTime to create Date objects
+    const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
+    const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
+
+    // Validate that end time is after start time
+    if (endDateTime <= startDateTime) {
+      setErrorText("End time must be after start time.");
+      return; // Stop form submission
+    }
+
     try {
       // Call the API to create the event
       await updateData("/event/create-event", "POST", formData);
+
+      // Clear any previous errors
+      setErrorText(null);
 
       // Call the callback to refresh the events list
       if (onEventCreated) {
@@ -32,6 +52,9 @@ const EventCreationForm = ({ onCancel, onEventCreated }) => {
       onCancel();
     } catch (err) {
       console.error("Error creating event:", err);
+      setErrorText(
+        err.message || "An error occurred while creating the event."
+      );
     }
   };
 
@@ -163,7 +186,7 @@ const EventCreationForm = ({ onCancel, onEventCreated }) => {
         {loading && <p className="text-sm text-blue-600">Creating event...</p>}
 
         {/* Display error message */}
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {errorText && <p className="text-sm text-red-600">{errorText}</p>}
 
         <div className="flex justify-end gap-3 pt-3">
           <button

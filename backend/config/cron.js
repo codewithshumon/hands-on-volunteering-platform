@@ -1,8 +1,10 @@
 import cron from "node-cron";
 import { updateEventStatus } from "../services/eventService.js";
 
-// Schedule the task to run every 2 minutes
-cron.schedule("*/2 * * * *", () => {
-  console.log("Running event status update task...");
-  updateEventStatus();
+// Schedule the task to run after every 1 minute if need after 2 minutes {"*/2 * * * *"}
+cron.schedule("* * * * *", async () => {
+  console.log(
+    "Running cron job to update event statuses and volunteer hours..."
+  );
+  await updateEventStatus();
 });
