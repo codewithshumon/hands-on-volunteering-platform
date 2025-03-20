@@ -17,8 +17,14 @@ const VolunteerHistory = ({ user }) => {
     fetchData(`/event/get-all-events?status=completed&userId=${user._id}`);
   }, [user._id, fetchData]);
 
-  console.log("[events in VolunteerHistory]", events);
-  console.log("[user._id in VolunteerHistory]", user._id);
+  // formate hours
+  const formattedHours = (hours) => {
+    return hours !== null && hours !== undefined
+      ? hours % 1 === 0
+        ? hours.toFixed(0)
+        : hours.toFixed(1)
+      : "0";
+  };
 
   // Update the events state when resData changes
   useEffect(() => {
@@ -35,7 +41,7 @@ const VolunteerHistory = ({ user }) => {
   if (error) {
     return (
       <p className="text-center text-red-500">
-        Ops! Something went wrong. Try again leter.
+        Ops! Something went wrong. Try again later.
       </p>
     );
   }
@@ -65,7 +71,7 @@ const VolunteerHistory = ({ user }) => {
                 </div>
                 <div className="flex items-center">
                   <FaClock className="mr-2 text-amber-600" />
-                  <p>Hours: {event.eventHours}</p>
+                  <p>Hours: {formattedHours(event.eventHours)}</p>
                 </div>
                 <div className="flex items-center">
                   <FaMapMarkerAlt className="mr-2 text-amber-600" />

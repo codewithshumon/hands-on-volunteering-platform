@@ -101,6 +101,13 @@ const Profile = () => {
     setSaveError(null);
   };
 
+  const formattedHours =
+    user?.volunteerHours !== null && user?.volunteerHours !== undefined
+      ? user.volunteerHours % 1 === 0
+        ? user.volunteerHours.toFixed(0)
+        : user.volunteerHours.toFixed(1)
+      : "0";
+
   return (
     <div className="md:col-span-1 bg-[#faf9f9] rounded-xl shadow-md p-6 h-fit relative">
       <div className="absolute top-4 left-4 right-4 flex justify-between">
@@ -173,9 +180,7 @@ const Profile = () => {
         )}
 
         <div className="bg-blue-100 rounded-lg p-3">
-          <p className="font-semibold text-blue-600">
-            {user?.hoursVolunteered || "0"} Hours
-          </p>
+          <p className="font-semibold text-blue-600">{formattedHours} Hours</p>
         </div>
       </div>
 

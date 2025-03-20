@@ -30,9 +30,25 @@ const EventCreationForm = ({ onCancel, onEventCreated }) => {
     const startDateTime = new Date(`${formData.date}T${formData.startTime}`);
     const endDateTime = new Date(`${formData.date}T${formData.endTime}`);
 
+    // Check if start time is at least 2 hours ahead of current time
+    if (startDateTime <= Date.now() + 2 * 60 * 60 * 1000) {
+      setErrorText(
+        "Start time must be at least 2 hours ahead of current time."
+      );
+      return; // Stop form submission
+    }
     // Validate that end time is after start time
     if (endDateTime <= startDateTime) {
       setErrorText("End time must be after start time.");
+      return; // Stop form submission
+    }
+
+    // Validate that start time and end time have at least 30 minutes difference
+    const timeDifferenceInMs = endDateTime - startDateTime;
+    const minimumDifferenceInMs = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+    if (timeDifferenceInMs < minimumDifferenceInMs) {
+      setErrorText("End time must be at least 30 minutes after start time.");
       return; // Stop form submission
     }
 
