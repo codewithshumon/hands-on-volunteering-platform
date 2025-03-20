@@ -15,8 +15,6 @@ const EventCreationForm = ({ onCancel, onEventCreated }) => {
     volunteersNeeded: 1,
   });
 
-  console.log("[formData in EventCreationForm]", formData);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 

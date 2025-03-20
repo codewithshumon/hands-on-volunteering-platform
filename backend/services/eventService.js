@@ -47,17 +47,12 @@ export const updateEventStatus = async () => {
         $inc: { volunteerHours: eventHours }, // Increment volunteerHours
       });
 
-      console.log("[User in updateEventStatus]", user);
-
       // Add hours to all attendees
       const manyUser = await User.updateMany(
         { _id: { $in: attendees } }, // Find all attendees
         { $inc: { volunteerHours: eventHours } } // Increment volunteerHours
       );
-      console.log("[manyUser in updateEventStatus]", manyUser);
     }
-
-    console.log("Event statuses and volunteer hours updated successfully");
   } catch (error) {
     console.error("[ERROR in updateEventStatus]", error);
   }

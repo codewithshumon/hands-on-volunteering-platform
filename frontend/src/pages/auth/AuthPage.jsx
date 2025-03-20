@@ -59,8 +59,6 @@ const AuthPage = ({ isLoginPage }) => {
           return;
         }
 
-        console.log("[response.data]", response.data);
-
         const { token, data: user } = response.data;
 
         dispatch(loginSuccess({ token, user }));

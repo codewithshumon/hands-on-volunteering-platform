@@ -21,7 +21,6 @@ const EventsPage = () => {
     fetchData("/event/get-all-events");
   }, []);
 
-  console.log("[events in EventPage]", events);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");

@@ -5,8 +5,6 @@ const ImpactEventsCardList = ({ events }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  console.log("[events]", events);
-
   // Determine if the current route is "/impact" or "/impact/log-hour"
   const isImpactRoute = location.pathname === "/impact" || "/impact/";
 

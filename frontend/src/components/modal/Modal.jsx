@@ -14,8 +14,6 @@ const Modal = ({ isOpen, children, onModalClose }) => {
     setModalIsOpen(isOpen);
   }, [isOpen]);
 
-  console.log("[isOpen in Modal]", isOpen);
-
   if (!modalIsOpen) return null;
 
   return (

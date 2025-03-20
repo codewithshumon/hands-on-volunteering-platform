@@ -14,7 +14,6 @@ import VerificationAlert from "../../components/impact/VerificationAlert";
 import ImpactEventsCardList from "../../components/impact/ImpactEventsCardList";
 
 const ImpactDashboardPage = () => {
-  console.log("[events]", events);
   return (
     <div className="p-6 bg-[#eeeded] min-h-screen pt-16">
       {/* Header Section */}

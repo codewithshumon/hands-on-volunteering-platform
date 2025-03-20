@@ -34,8 +34,6 @@ const EventsCreated = ({ userId }) => {
     setSelectedEvent(event);
   }, []);
 
-  console.log("[selectedEvent]", selectedEvent);
-
   // Toggle event list visibility
   const toggleEvents = () => {
     setIsOpen(!isOpen);

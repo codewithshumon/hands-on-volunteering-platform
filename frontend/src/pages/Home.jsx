@@ -1,17 +1,7 @@
 /* eslint-disable no-unused-vars */
 
 import { useState } from "react";
-import {
-  FaHandsHelping,
-  FaSearch,
-  FaCalendar,
-  FaUsers,
-  FaComment,
-  FaPlusCircle,
-  FaTrophy,
-  FaBell,
-  FaUserCircle,
-} from "react-icons/fa";
+import { FaCalendar, FaUsers, FaComment, FaTrophy } from "react-icons/fa";
 import { Link } from "react-router-dom";
 
 const Home = () => {
@@ -69,7 +59,7 @@ const Home = () => {
               Find Events
             </Link>
             <Link
-              to="/community/new"
+              to="/community"
               className="border-2 border-white px-8 py-3 rounded-lg text-lg hover:bg-white hover:text-blue-600"
             >
               Post Request

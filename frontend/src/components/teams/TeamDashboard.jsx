@@ -15,7 +15,7 @@ const TeamDashboard = ({ team, members }) => {
         <div className="w-fit h-fit">
           {team.admin === 1 && (
             <button
-              onClick={() => console.log("Delete team:", team.id)}
+              onClick={() => {}}
               className="relative bg-red-500 text-white px-6 py-2 rounded-lg font-semibold overflow-hidden transition-all duration-300 hover:bg-red-600 hover:shadow-lg hover:scale-105 focus:outline-none group"
             >
               <div className="flex items-center space-x-2 relative z-10">

@@ -24,8 +24,6 @@ const uploadToCloudinary = async (req, res, next) => {
       });
       req.profileImageUrl = result.secure_url; // Attach the Cloudinary URL to the request object
 
-      console.log("[req.profileImageUrl]", req.profileImageUrl);
-
       // Delete the temporary file
       fs.unlinkSync(req.file.path);
     }

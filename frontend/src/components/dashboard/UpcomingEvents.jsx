@@ -26,9 +26,6 @@ const UpcomingEvents = ({ user }) => {
     fetchData(`/event/get-all-events?status=upcoming&userId=${user._id}`);
   }, []);
 
-  console.log("[events in UpcomingEvetns]", events);
-  console.log("[user._id in UpcomingEvetns]", user._id);
-
   // Update the events state when resData changes
   useEffect(() => {
     if (resData) {

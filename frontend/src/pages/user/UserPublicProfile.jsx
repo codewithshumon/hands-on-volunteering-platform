@@ -13,8 +13,6 @@ const UserPublicProfile = () => {
   const { resData: user, loading, error, fetchData } = useApi();
   const [volunteerHistory, setVolunteerHistory] = useState([]);
 
-  console.log("[userId]", userId);
-
   useEffect(() => {
     fetchData(`/user/single-user/${userId}`);
   }, [userId]);
