@@ -27,6 +27,7 @@ import LogHoursPage from "./pages/impact/LogHourPage";
 
 import VerifyPassword from "./pages/auth/VerifyPassword";
 import UserPublicProfile from "./pages/user/UserPublicProfile";
+import SearchFeed from "./pages/search/SearchFeed";
 
 function App() {
   return (
@@ -93,6 +94,7 @@ function App() {
                       path="/user/profile/:userId"
                       element={<UserPublicProfile />}
                     />
+                    <Route path="/search" element={<SearchFeed />} />
                     <Route path="/dashboard" element={<UserDashboard />} />
                     <Route path="/events" element={<EventsPage />} />
                     <Route path="/community" element={<CommunityHelpPage />} />

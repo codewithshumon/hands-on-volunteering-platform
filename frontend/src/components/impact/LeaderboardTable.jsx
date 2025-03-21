@@ -19,7 +19,7 @@ const LeaderboardTable = ({ users, currentUserId }) => {
   });
 
   // Determine if we're on the "/impact" route
-  const isImpactRoute = location.pathname === "/impact" || "/impact/";
+  const isImpactRoute = location.pathname === "/impact";
 
   // Slice users to show only 5 if on "/impact"
   const displayedUsers = isImpactRoute ? sortedUsers.slice(0, 5) : sortedUsers;
