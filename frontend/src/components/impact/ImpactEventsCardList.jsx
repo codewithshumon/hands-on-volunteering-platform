@@ -6,7 +6,7 @@ const ImpactEventsCardList = ({ events }) => {
   const navigate = useNavigate();
 
   // Determine if the current route is "/impact" or "/impact/log-hour"
-  const isImpactRoute = location.pathname === "/impact" || "/impact/";
+  const isImpactRoute = location.pathname === "/impact";
 
   // Slice the events array to show only 5 events on the "/impact" route
   const displayedEvents = isImpactRoute ? events.slice(0, 5) : events;

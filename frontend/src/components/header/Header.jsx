@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react"; // Add useRef
 import { useSelector, useDispatch } from "react-redux";
 import { FaHandsHelping, FaBell, FaUserCircle, FaSearch } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { logout } from "../../store/slices/authSlice";
 
 const Header = () => {
@@ -13,6 +13,9 @@ const Header = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Check if the current path is /search
+  const isSearchPage = location.pathname === "/search";
 
   // Ref for the profile dropdown
   const profileDropdownRef = useRef(null);
@@ -81,7 +84,7 @@ const Header = () => {
           {/* Right Section - Search and User Controls */}
           <div className="flex items-center space-x-4">
             {/* Desktop Search */}
-            {token && currentUser && (
+            {!isSearchPage && token && currentUser && (
               <div className="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2">
                 <FaSearch className="text-gray-500 mr-2" />
                 <input
