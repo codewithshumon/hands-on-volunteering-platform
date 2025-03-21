@@ -42,8 +42,6 @@ export const getAllEvents = async (req, res) => {
       "name profileImage _id"
     ); // Populate creator details
 
-    console.log("[events in get all events]", events);
-
     res.status(200).json({
       message: "Events fetched successfully",
       data: events,

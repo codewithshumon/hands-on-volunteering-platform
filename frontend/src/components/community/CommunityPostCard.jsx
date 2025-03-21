@@ -2,7 +2,7 @@ import { useState } from "react";
 
 import { HelpRequestDetails } from "./HelpRequestDetails";
 
-export const HelpRequestCard = ({ request, onOfferHelp }) => {
+const CommunityPostCard = ({ request, onOfferHelp }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [comment, setComment] = useState("");
 
@@ -164,3 +164,5 @@ export const HelpRequestCard = ({ request, onOfferHelp }) => {
     </div>
   );
 };
+
+export default CommunityPostCard;

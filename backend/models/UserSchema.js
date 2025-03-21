@@ -74,6 +74,44 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+
+  communities: [
+    {
+      communityId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Community", // Reference to the Community model
+      },
+      role: {
+        type: String,
+        enum: ["admin", "editor", "member"], // Roles in the community
+        default: "member",
+      },
+    },
+  ],
+  pendingCommunityRequests: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CommunityJoinRequest", // Reference to the CommunityJoinRequest model
+    },
+  ],
+  communityOffers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CommunityOffer", // Reference to the CommunityOffer model
+    },
+  ],
+  roleOffers: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "RoleOffer", // Reference to the RoleOffer model
+    },
+  ],
+  createdCommunities: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Community", // Reference to the Community model
+    },
+  ],
 });
 
 // Hash password before saving
