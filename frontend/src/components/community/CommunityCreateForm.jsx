@@ -76,7 +76,7 @@ const CommunityCreateForm = ({ onCancel, onCommunityCreated }) => {
             type="text"
             name="name"
             value={formData.name}
-            onChange={handleInputChange}
+            onChange={handleInputChange} // Use handleInputChange here
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="Enter community name"
             required
@@ -91,7 +91,7 @@ const CommunityCreateForm = ({ onCancel, onCommunityCreated }) => {
           <textarea
             name="description"
             value={formData.description}
-            onChange={handleInputChange}
+            onChange={handleInputChange} // Use handleInputChange here
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             rows="3"
             placeholder="Describe your community"
@@ -108,7 +108,7 @@ const CommunityCreateForm = ({ onCancel, onCommunityCreated }) => {
             type="text"
             name="tags"
             value={formData.tags.join(", ")}
-            onChange={handleTagsChange}
+            onChange={handleTagsChange} // Use handleTagsChange here
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             placeholder="e.g., environment, education, health"
           />
@@ -158,13 +158,13 @@ const CommunityCreateForm = ({ onCancel, onCommunityCreated }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="px-5 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all"
+            className="px-5 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-all cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            className="px-5 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all  cursor-pointer"
             disabled={loading} // Disable the button while loading
           >
             {loading ? "Creating..." : "Create Community"}

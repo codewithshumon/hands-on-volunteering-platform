@@ -74,8 +74,6 @@ export const getMyEvents = async (req, res) => {
 };
 
 export const createEvent = async (req, res) => {
-  console.log("[Request Body]", req.body); // Debugging line
-
   const {
     title,
     description,
