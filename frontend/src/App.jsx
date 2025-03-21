@@ -6,7 +6,6 @@ import TokenExpirationChecker from "./components/global/TokenExpirationChecker";
 
 import PageNotFound from "./pages/PageNotFound";
 import Header from "./components/header/Header";
-
 import AuthGuard from "./routes/AuthGuard";
 
 import AuthPage from "./pages/auth/AuthPage";
@@ -15,7 +14,9 @@ import VerifyEmail from "./pages/auth/VerifyEmail";
 import Home from "./pages/Home";
 import UserDashboard from "./pages/user/UserDashboard";
 import EventsPage from "./pages/events/EventsPage";
-import { CommunityHelpPage } from "./pages/community/CommunityHelpPage";
+
+import CommunityPage from "./pages/community/CommunityPage";
+import CommunityFeedPage from "./pages/community/CommunityFeedPage";
 
 import TeamPage from "./pages/teams/TeamsPage";
 import TeamDetailsPage from "./pages/teams/TeamsDetailsPage";
@@ -97,7 +98,11 @@ function App() {
                     <Route path="/search" element={<SearchFeed />} />
                     <Route path="/dashboard" element={<UserDashboard />} />
                     <Route path="/events" element={<EventsPage />} />
-                    <Route path="/community" element={<CommunityHelpPage />} />
+                    <Route path="/community" element={<CommunityFeedPage />} />
+                    <Route
+                      path="/community/:communityId"
+                      element={<CommunityPage />}
+                    />
                     <Route path="/teams" element={<TeamPage />} />
                     <Route
                       path="/teams/loader-page"

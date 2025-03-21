@@ -10,6 +10,7 @@ import "./config/cron.js";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
+import communityRoutes from "./routes/communityRoutes.js";
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -50,3 +51,4 @@ app.use(cookieParser());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/event", eventRoutes);
+app.use("/api/v1/community", communityRoutes);
