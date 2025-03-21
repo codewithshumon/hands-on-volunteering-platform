@@ -1,6 +1,4 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 import { Provider } from "react-redux";
 import store from "./store/store";
@@ -29,7 +27,6 @@ import LogHoursPage from "./pages/impact/LogHourPage";
 
 import VerifyPassword from "./pages/auth/VerifyPassword";
 import UserPublicProfile from "./pages/user/UserPublicProfile";
-import EventFeedPage from "./pages/test/EventFeedPage";
 
 function App() {
   return (
@@ -38,7 +35,6 @@ function App() {
         <BrowserRouter>
           <TokenExpirationChecker />
           <Header />
-          <ToastContainer />
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
