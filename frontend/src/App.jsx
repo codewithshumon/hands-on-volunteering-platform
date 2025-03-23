@@ -98,10 +98,10 @@ function App() {
                     <Route path="/search" element={<SearchFeed />} />
                     <Route path="/dashboard" element={<UserDashboard />} />
                     <Route path="/events" element={<EventsPage />} />
-                    <Route path="/community" element={<CommunityFeedPage />} />
+                    <Route path="/community" element={<CommunityPage />} />
                     <Route
                       path="/community/:communityId"
-                      element={<CommunityPage />}
+                      element={<CommunityFeedPage />}
                     />
                     <Route path="/teams" element={<TeamPage />} />
                     <Route
