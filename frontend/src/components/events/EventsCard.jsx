@@ -27,10 +27,22 @@ const EventCard = ({ event, onSelect, onEventJoin }) => {
   const { updateData } = useApi();
   const currentUser = useSelector((state) => state.auth.user);
 
+  // Debugging logs
+  console.log("currentUser._id:", currentUser._id);
+  console.log("attendees:", event.attendees);
+  console.log(
+    "attendee.userId._id:",
+    event.attendees.map((attendee) => attendee.userId._id)
+  );
+
   // Check if the current user has joined the event
   const isJoined = event.attendees.some(
-    (attendee) => attendee.userId.toString() === currentUser._id.toString()
+    (attendee) => attendee.userId._id === currentUser._id
   );
+
+  const isEventCreator = event.createdBy._id === currentUser._id;
+
+  console.log("[isJoined]", isJoined);
 
   const eventCardHandler = useCallback(() => {
     onSelect(event);
@@ -107,7 +119,7 @@ const EventCard = ({ event, onSelect, onEventJoin }) => {
             <FaEye size={16} /> {/* View icon */}
             View
           </button>
-          {!isJoined && (
+          {!isJoined && !isEventCreator && (
             <button
               className="border border-blue-500 text-gray-800 px-4 py-1 rounded-lg hover:text-white hover:bg-blue-600 flex items-center gap-2 cursor-pointer"
               onClick={handleJoin}

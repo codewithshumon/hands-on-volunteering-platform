@@ -80,16 +80,7 @@ const EventSchema = new mongoose.Schema(
         userId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
-          required: [true, "User ID is required."],
-        },
-        name: {
-          type: String,
-          required: [true, "Attendee name is required."],
-          trim: true,
-        },
-        profileImage: {
-          type: String,
-          default: "https://avatar.iran.liara.run/public", // Default avatar
+          required: true,
         },
       },
     ],
@@ -140,5 +131,7 @@ EventSchema.index({ createdBy: 1 }); // Index on createdBy
 EventSchema.index({ status: 1 }); // Index on status
 EventSchema.index({ category: 1 }); // Index on category
 EventSchema.index({ title: "text", description: "text" }); // Text index for search
+EventSchema.index({ date: 1 }); // Index on date
+EventSchema.index({ updatedAt: -1 }); // Index on updatedAt
 
 export default mongoose.model("Event", EventSchema);

@@ -36,10 +36,12 @@ export const getAllEvents = async (req, res) => {
     }
 
     // Fetch events based on the query
-    const events = await Event.find(query).populate(
-      "createdBy",
-      "name profileImage _id"
-    ); // Populate creator details
+    const events = await Event.find(query)
+      .populate("createdBy", "name profileImage _id") // Populate creator details
+      .populate({
+        path: "attendees.userId", // Populate the userId field in attendees
+        select: "name profileImage _id", // Select the fields to populate
+      });
 
     res.status(200).json({
       message: "Events fetched successfully",
@@ -54,7 +56,6 @@ export const getAllEvents = async (req, res) => {
     });
   }
 };
-
 export const getMyEvents = async (req, res) => {
   const { userId } = req.params;
   try {
@@ -162,9 +163,13 @@ export const updateEvent = async (req, res) => {
 export const joinEvent = async (req, res) => {
   const { eventId } = req.params;
   const userId = req.user.id;
-  const { name, profileImage } = req.user;
 
   try {
+    // Validate userId
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
     const event = await Event.findById(eventId);
 
     if (!event) {
@@ -173,12 +178,13 @@ export const joinEvent = async (req, res) => {
 
     // Check if the user is the creator of the event
     if (event.createdBy.toString() === userId.toString()) {
-      return res.status(400).json({ message: "You can't join your event" });
+      return res.status(400).json({ message: "You can't join your own event" });
     }
 
-    // Check if event is alread ongoing or completed
-    if (event.status === "ongoing" || "completed") {
-      return res.status(400).json({ message: "Event is close" });
+    // Check if event is already ongoing or completed
+    if (event.status === "ongoing" || event.status === "completed") {
+      console.log("[event.status]", event.status);
+      return res.status(400).json({ message: "Event is closed" });
     }
 
     // Check if the user has already joined the event
@@ -198,13 +204,12 @@ export const joinEvent = async (req, res) => {
     }
 
     // Add the user to the event's attendees list
-    event.attendees.push({ userId, name, profileImage });
+    event.attendees.push({ userId });
     await event.save();
 
     res.status(200).json({ message: "Joined event successfully", event });
   } catch (error) {
     console.log("[ERROR in joinEvent]", error);
-
     res.status(500).json({ message: "Error joining event", error });
   }
 };

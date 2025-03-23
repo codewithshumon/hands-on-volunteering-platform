@@ -17,15 +17,25 @@ const CommunityPostSchema = new mongoose.Schema(
       maxlength: [1000, "Description cannot exceed 1000 characters."],
     },
     postedBy: {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+      community: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Community",
+      },
+    },
+    postedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: [true, "Posted by user ID is required."],
+      ref: "Community",
     },
     urgencyLevel: {
       type: String,
       enum: {
         values: ["low", "medium", "urgent"],
-        message: "Invalid urgency level.",
+        message:
+          "Invalid urgency level. Choose from 'low', 'medium', or 'urgent'.",
       },
       default: "medium",
     },
@@ -44,38 +54,32 @@ const CommunityPostSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: {
+        values: ["pending", "approved"],
+        message: "Invalid status. Choose from 'pending' or 'approved'.",
+      },
+      default: "approved",
+    },
+    postStatus: {
+      type: String,
+      enum: {
         values: ["open", "closed"],
-        message: "Invalid status.",
+        message: "Invalid post status. Choose from 'open' or 'closed'.",
       },
-      default: "open",
+      default: "open", // Post is open by default
     },
-    volunteersNeeded: {
-      type: Number,
-      required: [true, "Number of volunteers needed is required."],
-      min: [1, "At least 1 volunteer is required."],
-    },
-    attendees: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: [true, "Attendee ID is required."],
-      },
-    ],
-    comments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment",
-        required: [true, "Comment ID is required."],
-      },
-    ],
   },
-  { timestamps: true } // Automatically adds `createdAt` and `updatedAt`
+  { timestamps: true }
 );
 
-// Indexes for frequently queried fields
-CommunityPostSchema.index({ postedBy: 1 }); // Index on postedBy
-CommunityPostSchema.index({ urgencyLevel: 1 }); // Index on urgencyLevel
-CommunityPostSchema.index({ category: 1 }); // Index on category
-CommunityPostSchema.index({ status: 1 }); // Index on status
+// Indexes
+CommunityPostSchema.index({ "postedBy.user": 1 });
+CommunityPostSchema.index({ "postedBy.community": 1 });
+CommunityPostSchema.index({ urgencyLevel: 1 });
+CommunityPostSchema.index({ category: 1 });
+CommunityPostSchema.index({ status: 1 });
+CommunityPostSchema.index({ postStatus: 1 }); // Index on postStatus
+CommunityPostSchema.index({ updatedAt: -1 });
+CommunityPostSchema.index({ location: 1 });
+CommunityPostSchema.index({ title: "text", description: "text" });
 
 export default mongoose.model("CommunityPost", CommunityPostSchema);

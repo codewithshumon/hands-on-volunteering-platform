@@ -42,13 +42,7 @@ const CommunitySchema = new mongoose.Schema(
         },
       },
     ],
-    pendingRequests: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: [true, "User ID is required."],
-      },
-    ],
+
     isPublic: {
       type: Boolean,
       default: true,
@@ -57,18 +51,6 @@ const CommunitySchema = new mongoose.Schema(
       {
         type: String,
         trim: true,
-      },
-    ],
-    events: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Event",
-      },
-    ],
-    communityPost: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "CommunityPost",
       },
     ],
   },
@@ -93,6 +75,6 @@ CommunitySchema.pre("save", function (next) {
 CommunitySchema.index({ createdBy: 1 }); // Index on createdBy
 CommunitySchema.index({ isPublic: 1 }); // Index on isPublic
 CommunitySchema.index({ tags: 1 }); // Index on tags
-CommunitySchema.index({ pendingRequests: 1 }); // Index on pendingRequests
+CommunitySchema.index({ updatedAt: -1 }); // Index on updatedAt
 
 export default mongoose.model("Community", CommunitySchema);
