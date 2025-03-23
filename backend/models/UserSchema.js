@@ -23,7 +23,7 @@ const UserSchema = new mongoose.Schema({
     default: function () {
       // Generate default avatar URL based on the user's name
       const username = this.name.split(" ")[0]; // Use the first name for the avatar
-      return `https://avatar.iran.liara.run/username?username=${username}&bold=false&length=1`;
+      return `https://api.dicebear.com/9.x/initials/svg?seed=${username}&scale=130&backgroundType=gradientLinear`;
     },
   },
   skills: {
@@ -38,26 +38,7 @@ const UserSchema = new mongoose.Schema({
     type: Number,
     default: 0, // Total volunteer hours
   },
-  volunteerHistory: [
-    {
-      eventId: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
-      hours: { type: Number, default: 0 },
-      date: { type: Date, default: Date.now },
-    },
-  ],
-  createdEvents: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Event",
-    },
-  ],
-  joinedEvents: [
-    {
-      eventId: { type: mongoose.Schema.Types.ObjectId, ref: "Event" },
-      hours: { type: Number, default: 0 },
-      date: { type: Date, default: Date.now },
-    },
-  ],
+
   isEmailVerified: {
     type: Boolean,
     default: false,
@@ -74,44 +55,6 @@ const UserSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-
-  communities: [
-    {
-      communityId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Community", // Reference to the Community model
-      },
-      role: {
-        type: String,
-        enum: ["admin", "editor", "member"], // Roles in the community
-        default: "member",
-      },
-    },
-  ],
-  pendingCommunityRequests: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "CommunityJoinRequest", // Reference to the CommunityJoinRequest model
-    },
-  ],
-  communityOffers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "CommunityOffer", // Reference to the CommunityOffer model
-    },
-  ],
-  roleOffers: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "RoleOffer", // Reference to the RoleOffer model
-    },
-  ],
-  createdCommunities: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Community", // Reference to the Community model
-    },
-  ],
 });
 
 // Hash password before saving

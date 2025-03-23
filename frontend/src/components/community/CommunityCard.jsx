@@ -5,6 +5,7 @@ import {
   HiArrowRight,
   HiGlobe,
   HiLockClosed,
+  HiUserAdd, // Add this icon
 } from "react-icons/hi"; // Icons from react-icons
 import { Link, useNavigate } from "react-router-dom";
 
@@ -126,31 +127,46 @@ const CommunityCard = ({ post }) => {
           </div>
         </div>
 
-        {/* Action Button */}
-        {isPublic ? (
-          <button
-            onClick={handleJoin}
-            className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 text-sm cursor-pointer"
-          >
-            <span>Join Community</span>
-            <HiArrowRight className="w-4 h-4 ml-2" />
-          </button>
-        ) : isRequestPending ? (
-          <button
-            disabled
-            className="w-full flex items-center justify-center px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed text-sm"
-          >
-            <span>Request Pending</span>
-          </button>
-        ) : (
-          <button
-            onClick={handleRequestToJoin}
-            className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 text-sm cursor-pointer"
-          >
-            <span>Request to Join</span>
-            <HiArrowRight className="w-4 h-4 ml-2" />
-          </button>
-        )}
+        <div className=" w-full flex gap-2">
+          <div className=" w-full">
+            {/* Action Button */}
+            {isPublic ? (
+              <button
+                onClick={handleJoin}
+                className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 text-sm cursor-pointer"
+              >
+                <span>Join Community</span>
+                <HiUserAdd className="w-4 h-4 ml-2" /> {/* Updated icon */}
+              </button>
+            ) : isRequestPending ? (
+              <button
+                disabled
+                className="w-full flex items-center justify-center px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed text-sm"
+              >
+                <span>Request Pending</span>
+              </button>
+            ) : (
+              <button
+                onClick={handleRequestToJoin}
+                className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg hover:from-gray-600 hover:to-gray-700 transition-all duration-300 text-sm cursor-pointer"
+              >
+                <span>Request to Join</span>
+                <HiArrowRight className="w-4 h-4 ml-2" />
+              </button>
+            )}
+          </div>
+          <div className=" w-full">
+            <button
+              onClick={() => {
+                navigate(`/community/${post._id}`);
+              }}
+              className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 text-sm cursor-pointer"
+            >
+              <span>View </span>
+              <HiArrowRight className="w-4 h-4 ml-2" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
