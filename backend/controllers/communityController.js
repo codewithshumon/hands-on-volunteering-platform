@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Community from "../models/community/CommunitySchema.js";
 
 export const createCommunity = async (req, res) => {
@@ -20,15 +21,28 @@ export const createCommunity = async (req, res) => {
 };
 
 export const getAllCommunities = async (req, res) => {
+  const { sortBy } = req.query;
+
   try {
-    // Fetch communities based on the query
-    const communities = await Community.find().populate(
+    let query = Community.find();
+
+    // Apply sorting based on the `sortBy` parameter
+    if (sortBy === "members") {
+      // Sort by number of members (descending)
+      query = query.sort({ members: -1 });
+    } else if (sortBy === "createdAt") {
+      // Sort by creation date (newest to oldest)
+      query = query.sort({ createdAt: -1 });
+    }
+
+    // Fetch communities and populate creator details
+    const communities = await query.populate(
       "createdBy",
       "name profileImage _id"
-    ); // Populate creator details
+    );
 
     res.status(200).json({
-      message: "Events fetched successfully",
+      message: "Communities fetched successfully",
       data: communities,
     });
   } catch (error) {
@@ -37,6 +51,40 @@ export const getAllCommunities = async (req, res) => {
     res.status(500).json({
       message: "Error fetching communities",
       error: error.message, // Send only the error message for clarity
+    });
+  }
+};
+
+export const getSingleCommunity = async (req, res) => {
+  const { communityId } = req.params;
+
+  try {
+    if (!mongoose.isValidObjectId(communityId)) {
+      return res.status(400).json({
+        message: "Invalid Community ID",
+      });
+    }
+
+    const community = await Community.findById(communityId).populate(
+      "createdBy",
+      "name profileImage _id"
+    );
+
+    if (!community) {
+      return res.status(404).json({
+        message: "Community not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Community fetched successfully",
+      data: community,
+    });
+  } catch (error) {
+    console.log("[ERROR in getCommunityById]", error);
+    res.status(500).json({
+      message: "Error fetching community",
+      error: error.message,
     });
   }
 };

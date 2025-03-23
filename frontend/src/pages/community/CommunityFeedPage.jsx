@@ -1,9 +1,9 @@
-import { TopCommunities } from "../../components/community/TopCommunities";
-import { CommunityProfile } from "../../components/community/CommunityProfile";
+import useApi from "../../hooks/useApi";
 
-const CommunityFeedPage = () => {
-  // Dummy data for top communities, posts, and profile
+import TopCommunities from "../../components/community/TopCommunities";
+import CommunityProfile from "../../components/community/CommunityProfile";
 
+const CommunityPage = () => {
   const communityPosts = [
     {
       id: 1,
@@ -72,4 +72,4 @@ const CommunityFeedPage = () => {
   );
 };
 
-export default CommunityFeedPage;
+export default CommunityPage;

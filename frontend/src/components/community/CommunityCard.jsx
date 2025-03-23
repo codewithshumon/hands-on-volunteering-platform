@@ -9,7 +9,7 @@ import {
 } from "react-icons/hi";
 import { Link, useNavigate } from "react-router-dom";
 
-const CommunityCard = ({ post }) => {
+const CommunityCard = ({ community }) => {
   const {
     name,
     description,
@@ -19,7 +19,7 @@ const CommunityCard = ({ post }) => {
     profileImage,
     isPublic,
     members,
-  } = post;
+  } = community;
 
   const navigate = useNavigate();
   const [isRequestPending, setIsRequestPending] = useState(false);
@@ -33,15 +33,15 @@ const CommunityCard = ({ post }) => {
 
   // Handle community join button
   const handleJoin = useCallback(() => {
-    navigate(`/community/${post._id}`);
-  }, [post._id, navigate]);
+    navigate(`/community/${community._id}`);
+  }, [community._id, navigate]);
 
   // Handle request to join button
   const handleRequestToJoin = useCallback(() => {
     setIsRequestPending(true);
     alert(`Request sent to join ${name}`);
-    navigate(`/community/${post._id}`);
-  }, [name, navigate, post._id]);
+    navigate(`/community/${community._id}`);
+  }, [name, navigate, community._id]);
 
   return (
     <div className="w-full max-w-2xl rounded-xl overflow-hidden shadow-lg bg-white border border-gray-100 hover:shadow-xl transition-shadow duration-300">
@@ -155,7 +155,7 @@ const CommunityCard = ({ post }) => {
               </button>
             )}
             <button
-              onClick={() => navigate(`/community/${post._id}`)}
+              onClick={() => navigate(`/community/${community._id}`)}
               className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-300 text-sm cursor-pointer"
             >
               <span>View</span>

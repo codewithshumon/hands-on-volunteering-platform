@@ -7,7 +7,7 @@ import CommunityCard from "../../components/community/CommunityCard";
 
 const CommunityPage = () => {
   const { fetchData, resData, loading, error } = useApi();
-  const [posts, setPosts] = useState([]);
+  const [communitys, setCommunity] = useState([]);
   const [showModal, setShowModal] = useState(false);
 
   // Fetch communities on component mount
@@ -18,7 +18,7 @@ const CommunityPage = () => {
   // Update posts state when resData changes
   useEffect(() => {
     if (resData) {
-      setPosts(resData);
+      setCommunity(resData);
     }
   }, [resData]);
 
@@ -79,10 +79,10 @@ const CommunityPage = () => {
         {/* Display communities */}
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {posts.map((post, index) => (
+            {communitys.map((community, index) => (
               <CommunityCard
                 key={index}
-                post={post}
+                community={community}
                 onOfferHelp={handleOfferHelp}
               />
             ))}
