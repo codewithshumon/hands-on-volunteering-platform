@@ -53,6 +53,8 @@ export const updateEventStatus = async () => {
         { $inc: { volunteerHours: eventHours } } // Increment volunteerHours
       );
     }
+
+    console.log("updateEventStatus success");
   } catch (error) {
     console.error("[ERROR in updateEventStatus]", error);
   }
