@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 const { Types } = mongoose;
 
 import Event from "../models/EventSchema.js";
-import User from "../models/UserSchema.js";
 
 export const getAllEvents = async (req, res) => {
   const { status, userId } = req.query;
@@ -202,11 +201,6 @@ export const joinEvent = async (req, res) => {
     event.attendees.push({ userId, name, profileImage });
     await event.save();
 
-    // Add the event to the user's joinedEvents array
-    await User.findByIdAndUpdate(userId, {
-      $push: { joinedEvents: { eventId, date: new Date() } },
-    });
-
     res.status(200).json({ message: "Joined event successfully", event });
   } catch (error) {
     console.log("[ERROR in joinEvent]", error);
@@ -233,11 +227,6 @@ export const leaveEvent = async (req, res) => {
     );
 
     await event.save();
-
-    // Remove the event from the user's joinedEvents array
-    await User.findByIdAndUpdate(userId, {
-      $pull: { joinedEvents: { eventId } },
-    });
 
     res.status(200).json({ message: "Left event successfully", event });
   } catch (error) {
@@ -266,11 +255,6 @@ export const deleteEvent = async (req, res) => {
     }
 
     await Event.findByIdAndDelete(eventId);
-
-    // Remove the event from the user's createdEvents array
-    await User.findByIdAndUpdate(userId, {
-      $pull: { createdEvents: eventId },
-    });
 
     res.status(200).json({ message: "Event deleted successfully" });
   } catch (error) {
