@@ -1,61 +1,63 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-const UserSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  profileImage: {
-    type: String,
-    default: function () {
-      // Generate default avatar URL based on the user's name
-      const username = this.name.split(" ")[0]; // Use the first name for the avatar
-      return `https://api.dicebear.com/9.x/initials/svg?seed=${username}&scale=130&backgroundType=gradientLinear`;
+const UserSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+      match: [
+        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+        "Please enter a valid email address",
+      ],
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: [8, "Password must be at least 8 characters long"],
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    profileImage: {
+      type: String,
+      default: function () {
+        const username = this.name ? this.name.split(" ")[0] : "user";
+        return `https://api.dicebear.com/9.x/initials/svg?seed=${username.toLowerCase()}&scale=130&backgroundType=gradientLinear`;
+      },
+    },
+    skills: {
+      type: [String],
+      default: [],
+    },
+    causes: {
+      type: [String],
+      default: [],
+    },
+    volunteerHours: {
+      type: Number,
+      default: 0,
+    },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationCode: {
+      type: String,
+      default: null,
+    },
+    emailVerificationCodeExpires: {
+      type: Date,
+      default: null,
     },
   },
-  skills: {
-    type: [String],
-    default: [],
-  },
-  causes: {
-    type: [String],
-    default: [],
-  },
-  volunteerHours: {
-    type: Number,
-    default: 0, // Total volunteer hours
-  },
-
-  isEmailVerified: {
-    type: Boolean,
-    default: false,
-  },
-  emailVerificationCode: {
-    type: String,
-    default: null,
-  },
-  emailVerificationCodeExpires: {
-    type: Date,
-    default: null,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+  { timestamps: true } // Automatically adds `createdAt` and `updatedAt`
+);
 
 // Hash password before saving
 UserSchema.pre("save", async function (next) {
@@ -69,5 +71,9 @@ UserSchema.pre("save", async function (next) {
 UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
+
+// Indexes for frequently queried fields
+UserSchema.index({ email: 1 });
+UserSchema.index({ name: 1 });
 
 export default mongoose.model("User", UserSchema);
