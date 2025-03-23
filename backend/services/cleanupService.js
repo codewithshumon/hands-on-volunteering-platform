@@ -5,11 +5,10 @@ import User from "../models/UserSchema.js";
 // Function to clean up events and communities related to deleted users
 export const cleanupEventsAndCommunities = async () => {
   try {
-    // Step 1: Find all events and communities
+    // Cleanup events and communities created by deleted users
     const eventsToDelete = await Event.find({});
     const communitiesToDelete = await Community.find({});
 
-    // Step 2: Cleanup events and communities created by deleted users
     for (const event of eventsToDelete) {
       const creatorExists = await User.exists({ _id: event.createdBy });
       if (!creatorExists) {
@@ -32,33 +31,46 @@ export const cleanupEventsAndCommunities = async () => {
       }
     }
 
-    // Step 3: Cleanup deleted users from `attendees` and `members` lists
-    const allEvents = await Event.find({});
-    const allCommunities = await Community.find({});
-
-    for (const event of allEvents) {
+    // Cleanup deleted users from `attendees` and `members` lists
+    for (const event of eventsToDelete) {
       // Find valid attendees (users who still exist)
-      const validAttendees = await User.find({ _id: { $in: event.attendees } });
-      const validAttendeeIds = validAttendees.map((user) => user._id);
+      const validAttendees = await User.find({
+        _id: { $in: event.attendees.map((a) => a.userId) },
+      });
+      const validAttendeeIds = validAttendees.map((user) =>
+        user._id.toString()
+      );
+
+      // Filter out non-existent attendees
+      const updatedAttendees = event.attendees.filter((attendee) =>
+        validAttendeeIds.includes(attendee.userId.toString())
+      );
 
       // If the number of valid attendees is less than the current attendees list, update the event
-      if (event.attendees.length !== validAttendeeIds.length) {
+      if (event.attendees.length !== updatedAttendees.length) {
         await Event.findByIdAndUpdate(event._id, {
-          attendees: validAttendeeIds,
+          attendees: updatedAttendees,
         });
         console.log(`Cleaned up attendees for event ${event._id}`);
       }
     }
 
-    for (const community of allCommunities) {
+    for (const community of communitiesToDelete) {
       // Find valid members (users who still exist)
-      const validMembers = await User.find({ _id: { $in: community.members } });
-      const validMemberIds = validMembers.map((user) => user._id);
+      const validMembers = await User.find({
+        _id: { $in: community.members },
+      });
+      const validMemberIds = validMembers.map((user) => user._id.toString());
+
+      // Filter out non-existent members
+      const updatedMembers = community.members.filter((member) =>
+        validMemberIds.includes(member.toString())
+      );
 
       // If the number of valid members is less than the current members list, update the community
-      if (community.members.length !== validMemberIds.length) {
+      if (community.members.length !== updatedMembers.length) {
         await Community.findByIdAndUpdate(community._id, {
-          members: validMemberIds,
+          members: updatedMembers,
         });
         console.log(`Cleaned up members for community ${community._id}`);
       }

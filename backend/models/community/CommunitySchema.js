@@ -1,77 +1,80 @@
 import mongoose from "mongoose";
 
-const CommunitySchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  description: {
-    type: String,
-    required: true,
-  },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Reference to the User model
-    required: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  profileImage: {
-    type: String, // URL of the profile image
-    default: "", // Default will be set in the pre-save hook
-  },
-  members: [
-    {
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User", // Reference to the User model
-      },
-      role: {
-        type: String,
-        enum: ["admin", "editor", "member"], // Roles for community members
-        default: "member",
-      },
-    },
-  ],
-  pendingRequests: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // Reference to the User model
-    },
-  ],
-  isPublic: {
-    type: Boolean,
-    default: true,
-  },
-  tags: [
-    {
+const CommunitySchema = new mongoose.Schema(
+  {
+    name: {
       type: String,
+      required: [true, "Community name is required."],
+      trim: true,
+      minlength: [3, "Community name must be at least 3 characters long."],
+      maxlength: [100, "Community name cannot exceed 100 characters."],
     },
-  ],
-  events: [
-    {
+    description: {
+      type: String,
+      required: [true, "Community description is required."],
+      trim: true,
+      minlength: [
+        10,
+        "Community description must be at least 10 characters long.",
+      ],
+      maxlength: [300, "Community description cannot exceed 300 characters."],
+    },
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Event", // Reference to the Event model (if you have one)
+      ref: "User",
+      required: [true, "Creator ID is required."],
     },
-  ],
-  communityPost: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "CommunityPost", // Reference to the CommunityHelpPost model
+    profileImage: {
+      type: String,
+      default: "", // Default will be set in the pre-save hook
     },
-  ],
+    members: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: [true, "User ID is required."],
+        },
+        role: {
+          type: String,
+          enum: ["admin", "editor", "member"],
+          default: "member",
+        },
+      },
+    ],
+
+    isPublic: {
+      type: Boolean,
+      default: true,
+    },
+    tags: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
+  },
+  { timestamps: true } // Automatically adds `createdAt` and `updatedAt`
+);
+
+// Virtual property for default profile image
+CommunitySchema.virtual("defaultProfileImage").get(function () {
+  const communityName = this.name.replace(/\s+/g, "+");
+  return `https://ui-avatars.com/api/?name=${communityName}&background=random&size=200`;
 });
 
 // Pre-save hook to generate a default profile image
 CommunitySchema.pre("save", function (next) {
   if (!this.profileImage) {
-    // Generate a default image URL based on the community name
-    const communityName = this.name.replace(/\s+/g, "+"); // Replace spaces with '+'
-    this.profileImage = `https://ui-avatars.com/api/?name=${communityName}&background=random&size=200`;
+    this.profileImage = this.defaultProfileImage;
   }
   next();
 });
+
+// Indexes for frequently queried fields
+CommunitySchema.index({ createdBy: 1 }); // Index on createdBy
+CommunitySchema.index({ isPublic: 1 }); // Index on isPublic
+CommunitySchema.index({ tags: 1 }); // Index on tags
+CommunitySchema.index({ updatedAt: -1 }); // Index on updatedAt
 
 export default mongoose.model("Community", CommunitySchema);

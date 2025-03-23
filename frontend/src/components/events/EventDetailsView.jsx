@@ -20,7 +20,7 @@ const EventDetailsView = ({ event, onClose, onEventLeave }) => {
 
   // Check if the current user has joined the event
   const isJoined = event.attendees.some(
-    (attendee) => attendee.userId.toString() === currentUser._id.toString()
+    (attendee) => attendee.userId._id === currentUser._id
   );
 
   // Function to handle leaving the event
@@ -37,6 +37,12 @@ const EventDetailsView = ({ event, onClose, onEventLeave }) => {
       alert(err.message); // Show error message
     }
   };
+
+  console.log("event]", event);
+  console.log("event.createdBy.name:", event.createdBy.name);
+  console.log("event.createdBy.profileImage:", event.createdBy.profileImage);
+  console.log("event.createdBy._id:", event.createdBy._id);
+  if (!event || !event.createdBy) return <div>Loading...</div>;
 
   return (
     <Modal isOpen={true} onModalClose={onClose}>
@@ -116,22 +122,23 @@ const EventDetailsView = ({ event, onClose, onEventLeave }) => {
               <p>
                 {event.attendees.length === 0 ? "No one joined yet." : null}
               </p>
-              <div className="grid grid-cols-2 gap-4">
+              <p>{}</p>
+              <div className="grid grid-cols-2 gap-4 overflow-auto">
                 {event.attendees.map((attendee, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3  rounded-lg "
+                    className="flex items-center gap-3  rounded-lg text-sm "
                   >
                     {/* Attendee profile image */}
                     <img
-                      src={attendee.profileImage || "/default-avatar.png"}
-                      alt={attendee.name}
-                      className="w-5 h-5 rounded-full object-cover"
+                      src={attendee.userId.profileImage}
+                      alt={attendee.userId.name}
+                      className="w-4 h-4 rounded-full object-cover"
                     />
                     {/* Attendee name */}
-                    <Link to={`/user/profile/${attendee.userId}`}>
+                    <Link to={`/user/profile/${attendee.userId._id}`}>
                       <span className="text-gray-700 font-small hover:underline">
-                        {attendee.name}
+                        {attendee.userId.name}
                       </span>
                     </Link>
                   </div>
