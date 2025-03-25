@@ -110,8 +110,6 @@ const Profile = () => {
         : user.volunteerHours.toFixed(1)
       : "0";
 
-  console.log("[user in Profile]", user);
-
   return (
     <div className="md:col-span-1 bg-[#faf9f9] rounded-xl shadow-md p-6 h-fit relative">
       <div className="absolute top-4 left-4 right-4 flex justify-between">

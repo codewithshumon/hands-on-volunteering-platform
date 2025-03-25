@@ -1,73 +1,132 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from "react";
-import {
-  FaUser,
-  FaHeart,
-  FaClock,
-  FaCalendar,
-  FaComments,
-  FaCircle,
-  FaChevronLeft,
-  FaChevronRight,
-} from "react-icons/fa";
+import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
-
+import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
 import useApi from "../../hooks/useApi";
-import ImageView from "../../components/global/ImageView";
 import ProfileSkeleton from "../../components/skeleton/ProfileSkeleton";
-import EventsCreated from "../../components/user/public-profile/EventsCreated";
 import ChatBox from "../../components/chat/ChatBox";
 import TopMembersSidebar from "../../components/user/public-profile/TopMembersSidebar";
+import PublicUserProfile from "../../components/user/public-profile/PublicUserProfile";
 
 const UserPublicProfile = () => {
   const { userId } = useParams();
+  const dispatch = useDispatch();
   const { resData: user, loading, error, fetchData } = useApi();
   const [volunteerHistory, setVolunteerHistory] = useState([]);
   const [activeChats, setActiveChats] = useState([]);
-  const [onlineUsers, setOnlineUsers] = useState({});
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [pendingMessages, setPendingMessages] = useState({});
 
+  const { onlineUsers, isConnected } = useSelector((state) => state.socket);
+  const currentUser = useSelector((state) => state.auth.user);
+
+  // Fetch user data
   useEffect(() => {
     fetchData(`/user/single-user/${userId}`);
+  }, [userId, fetchData]);
 
-    // Simulate online status updates
-    const statusInterval = setInterval(() => {
-      setOnlineUsers((prev) => ({
-        ...prev,
-        [userId]: Math.random() > 0.3,
-      }));
-    }, 10000);
+  // Connect socket when user is available
+  useEffect(() => {
+    if (currentUser?._id) {
+      dispatch({ type: "socket/connect", payload: currentUser._id });
+    }
 
-    return () => clearInterval(statusInterval);
-  }, [userId]);
+    return () => {
+      dispatch({ type: "socket/disconnect" });
+    };
+  }, [currentUser?._id, dispatch]);
 
+  // Update volunteer history
   useEffect(() => {
     if (user) {
       setVolunteerHistory(user.volunteerHistory || []);
-      setOnlineUsers((prev) => ({
-        ...prev,
-        [user._id]: Math.random() > 0.5,
-      }));
     }
   }, [user]);
 
-  const openChat = (user) => {
+  // Handle incoming messages
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const handleMessage = (message) => {
+      // Skip if this is our own optimistic message
+      if (pendingMessages[message.timestamp]) {
+        setPendingMessages((prev) => {
+          const newPending = { ...prev };
+          delete newPending[message.timestamp];
+          return newPending;
+        });
+        return;
+      }
+
+      setActiveChats((prevChats) => {
+        const chatUserId = message.isOwn
+          ? message.receiverId
+          : message.senderId;
+        const existingChat = prevChats.find(
+          (chat) => chat.userId === chatUserId
+        );
+
+        if (!existingChat) {
+          return [
+            ...prevChats,
+            {
+              userId: chatUserId,
+              user: {
+                _id: chatUserId,
+                name: message.senderName || "Unknown User",
+              },
+              isMinimized: true,
+              messages: [message],
+              hasNewMessage: true,
+            },
+          ];
+        }
+
+        return prevChats.map((chat) =>
+          chat.userId === chatUserId
+            ? {
+                ...chat,
+                messages: [...chat.messages, message],
+                hasNewMessage: chat.isMinimized,
+              }
+            : chat
+        );
+      });
+    };
+
+    // Register the message listener
+    dispatch({ type: "socket/listenForMessages", payload: handleMessage });
+
+    // Cleanup
+    return () => {
+      dispatch({
+        type: "socket/removeMessageListener",
+        payload: handleMessage,
+      });
+    };
+  }, [isConnected, dispatch, pendingMessages]);
+
+  const openChat = (targetUser) => {
     setActiveChats((prevChats) => {
-      const existingChat = prevChats.find((chat) => chat.userId === user._id);
+      const existingChat = prevChats.find(
+        (chat) => chat.userId === targetUser._id
+      );
+
       if (!existingChat) {
         return [
           ...prevChats,
           {
-            userId: user._id,
-            user,
+            userId: targetUser._id,
+            user: targetUser,
             isMinimized: false,
             messages: [],
             hasNewMessage: false,
           },
         ];
       }
+
       return prevChats.map((chat) =>
-        chat.userId === user._id
+        chat.userId === targetUser._id
           ? { ...chat, isMinimized: false, hasNewMessage: false }
           : chat
       );
@@ -90,6 +149,52 @@ const UserPublicProfile = () => {
     );
   };
 
+  const sendMessage = (chatUserId, messageContent) => {
+    if (!isConnected || !currentUser?._id || !messageContent.trim()) return;
+
+    const timestamp = new Date().toISOString();
+
+    // Create the message object
+    const message = {
+      receiverId: chatUserId,
+      content: messageContent.trim(),
+      timestamp, // Use the same timestamp for tracking
+    };
+
+    // Optimistic UI update
+    const optimisticMessage = {
+      senderId: currentUser._id,
+      receiverId: chatUserId,
+      content: messageContent.trim(),
+      timestamp,
+      isOwn: true,
+      status: "sending",
+    };
+
+    // Track this pending message
+    setPendingMessages((prev) => ({
+      ...prev,
+      [timestamp]: true,
+    }));
+
+    setActiveChats((prevChats) =>
+      prevChats.map((chat) =>
+        chat.userId === chatUserId
+          ? {
+              ...chat,
+              messages: [...chat.messages, optimisticMessage],
+            }
+          : chat
+      )
+    );
+
+    // Send via Redux middleware
+    dispatch({
+      type: "socket/sendMessage",
+      payload: message,
+    });
+  };
+
   const toggleSidebar = () => {
     setIsSidebarExpanded(!isSidebarExpanded);
   };
@@ -100,16 +205,21 @@ const UserPublicProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-16 flex">
-      {/* Sidebar Area */}
+      {/* Sidebar */}
       <div
         className={`relative ${
           isSidebarExpanded ? "w-1/4" : "w-0"
         } transition-all duration-300`}
       >
-        <TopMembersSidebar openChat={openChat} isExpanded={isSidebarExpanded} />
+        <TopMembersSidebar
+          openChat={openChat}
+          isExpanded={isSidebarExpanded}
+          onlineUsers={onlineUsers}
+          onClose={toggleSidebar}
+        />
       </div>
 
-      {/* Fixed Toggle Button */}
+      {/* Sidebar Toggle */}
       <button
         onClick={toggleSidebar}
         className={`fixed left-0 top-1/2 z-50 w-8 h-8 bg-white rounded-r-full shadow-md flex items-center justify-center transform -translate-y-1/2 ${
@@ -124,147 +234,28 @@ const UserPublicProfile = () => {
         )}
       </button>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <div
         className={`${
           isSidebarExpanded ? "w-3/4" : "w-full"
         } transition-all duration-300`}
       >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Profile Header */}
-          <div className="bg-white rounded-xl shadow-md p-8 text-center">
-            <div className="relative w-32 h-32 mx-auto mb-6 overflow-hidden rounded-full">
-              <ImageView
-                image={user?.profileImage || "https://placehold.co/400"}
-                alt="Profile Image"
-              />
-              {onlineUsers[user?._id] && (
-                <div className="absolute bottom-2 right-2 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-              )}
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {user?.name}
-            </h1>
-            <p className="text-gray-600 mb-4">
-              {user?.bio || "Volunteer enthusiast"}
-              <span className="flex items-center justify-center mt-2 text-sm">
-                <FaCircle
-                  className={`mr-1 text-xs ${
-                    onlineUsers[user?._id] ? "text-green-500" : "text-gray-400"
-                  }`}
-                />
-                {onlineUsers[user?._id] ? "Online" : "Offline"}
-              </span>
-            </p>
-            <div className="flex justify-center space-x-4">
-              <div className="bg-blue-100 rounded-lg p-3">
-                <p className="font-semibold text-blue-600 flex items-center">
-                  <FaClock className="mr-2" />
-                  {user?.hoursVolunteered || "0"} h
-                </p>
-              </div>
-              <div className="bg-blue-100 rounded-lg p-3 hover:bg-green-200 transition-colors">
-                <button
-                  className="font-semibold text-blue-700 flex items-center cursor-pointer"
-                  onClick={() => openChat(user)}
-                >
-                  <div className="relative mr-2">
-                    <FaComments />
-                    {onlineUsers[user?._id] ? (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    ) : (
-                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-gray-400 rounded-full"></span>
-                    )}
-                  </div>
-                  Chat
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Skills and Causes */}
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <FaUser className="mr-2 text-blue-600" />
-                Skills
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {user?.skills?.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="bg-gray-100 px-3 py-1 rounded-full text-sm"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <FaHeart className="mr-2 text-red-600" />
-                Supported Causes
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {user?.causes?.map((cause, index) => (
-                  <span
-                    key={index}
-                    className="bg-red-100 px-3 py-1 rounded-full text-sm"
-                  >
-                    {cause}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Volunteering History */}
-          <div className="mt-8 bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-              <FaCalendar className="mr-2 text-green-600" />
-              Volunteering History
-            </h2>
-            {volunteerHistory.length > 0 ? (
-              <div className="space-y-4">
-                {volunteerHistory.map((event) => (
-                  <div
-                    key={event.id}
-                    className="p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
-                  >
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {event.title}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      {new Date(event.date).toLocaleDateString()} •{" "}
-                      {event.hours} Hours
-                    </p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-600">
-                No volunteering history available.
-              </p>
-            )}
-          </div>
-
-          {/* Events Created by the User */}
-          <div className="mt-8">
-            <EventsCreated userId={userId} />
-          </div>
-        </div>
+        <PublicUserProfile
+          user={user}
+          onlineUsers={onlineUsers}
+          volunteerHistory={volunteerHistory}
+          userId={userId}
+          openChat={openChat}
+        />
       </div>
 
       {/* Chat Windows */}
       <div className="fixed bottom-0 right-5 z-50 flex flex-row-reverse items-end">
-        {activeChats.map((chat, index) => (
+        {activeChats.map((chat) => (
           <div
-            key={index}
+            key={chat.userId}
             className="mr-2"
-            style={{
-              marginRight: "20px",
-            }}
+            style={{ marginRight: "20px" }}
           >
             <ChatBox
               user={chat.user}
@@ -275,6 +266,7 @@ const UserPublicProfile = () => {
               isMinimized={chat.isMinimized}
               hasNewMessage={chat.hasNewMessage}
               isOnline={onlineUsers[chat.userId]}
+              onSendMessage={(message) => sendMessage(chat.userId, message)}
             />
           </div>
         ))}

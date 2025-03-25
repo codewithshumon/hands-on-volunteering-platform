@@ -38,10 +38,6 @@ const EventDetailsView = ({ event, onClose, onEventLeave }) => {
     }
   };
 
-  console.log("event]", event);
-  console.log("event.createdBy.name:", event.createdBy.name);
-  console.log("event.createdBy.profileImage:", event.createdBy.profileImage);
-  console.log("event.createdBy._id:", event.createdBy._id);
   if (!event || !event.createdBy) return <div>Loading...</div>;
 
   return (

@@ -9,7 +9,7 @@ import {
 } from "react-icons/fa";
 import useApi from "../../../hooks/useApi";
 
-const TopMembersSidebar = ({ openChat, isExpanded, onClose }) => {
+const TopMembersSidebar = ({ openChat, isExpanded, onClose, onlineUsers }) => {
   const { resData, loading, error, fetchData } = useApi();
   const [topMembers, setTopMembers] = useState([]);
 
@@ -66,6 +66,9 @@ const TopMembersSidebar = ({ openChat, isExpanded, onClose }) => {
                     alt={member.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
+                  {onlineUsers[member._id] && (
+                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900">{member.name}</h3>

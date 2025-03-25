@@ -10,16 +10,12 @@ const ChatBox = ({
   isMinimized,
   isOnline,
   hasNewMessage,
+  onSendMessage,
 }) => {
   const [message, setMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [localMessages, setLocalMessages] = useState(messages);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    setLocalMessages(messages);
-
-    // Check if mobile device
     const checkIfMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
@@ -28,65 +24,12 @@ const ChatBox = ({
     window.addEventListener("resize", checkIfMobile);
 
     return () => window.removeEventListener("resize", checkIfMobile);
-  }, [messages]);
-
-  const getRandomResponse = () => {
-    const responses = [
-      "Thanks for your message!",
-      "I'll get back to you soon.",
-      "That's interesting!",
-      "Let me think about that...",
-      "I appreciate you reaching out!",
-      "Can we talk about this later?",
-      "Great point!",
-      "I'm currently busy, but I'll respond properly soon.",
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
-
-  const simulateTyping = () => {
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-    }, 1500);
-  };
+  }, []);
 
   const handleSendMessage = () => {
     if (message.trim() === "") return;
-
-    const newMessage = {
-      id: Date.now(),
-      text: message,
-      sender: "You",
-      timestamp: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-    };
-
-    setLocalMessages((prev) => [...prev, newMessage]);
+    onSendMessage(message);
     setMessage("");
-    simulateTyping();
-
-    // Simulate reply after 1-3 seconds
-    const delay = 1000 + Math.random() * 2000;
-    setTimeout(() => {
-      const replyMessage = {
-        id: Date.now() + 1,
-        text: getRandomResponse(),
-        sender: user?.name || "User",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setLocalMessages((prev) => [...prev, replyMessage]);
-    }, delay);
-  };
-
-  const formatStatus = () => {
-    if (isOnline) return "Online";
-    return "Offline";
   };
 
   const handleKeyPress = (e) => {
@@ -127,7 +70,6 @@ const ChatBox = ({
         isMobile ? "fixed inset-0 z-50 rounded-none" : "w-80"
       }`}
     >
-      {/* Chat Header */}
       <div className="flex justify-between items-center bg-blue-700 text-white p-3">
         <div>
           <h3 className="font-semibold text-lg">{user?.name}</h3>
@@ -137,8 +79,7 @@ const ChatBox = ({
                 isOnline ? "text-green-300" : "text-gray-300"
               }`}
             />
-            <span>{formatStatus()}</span>
-            {isTyping && <span className="ml-2 italic">typing...</span>}
+            <span>{isOnline ? "Online" : "Offline"}</span>
           </div>
         </div>
         <div className="flex space-x-3">
@@ -159,46 +100,42 @@ const ChatBox = ({
         </div>
       </div>
 
-      {/* Chat Messages */}
       <div
         className={`p-3 overflow-y-auto bg-gray-50 ${
           isMobile ? "h-[calc(100vh-120px)]" : "h-60"
         }`}
       >
-        {localMessages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500">
             <p>No messages yet</p>
             <p className="text-sm mt-1">Start chatting with {user?.name}</p>
           </div>
         ) : (
-          localMessages.map((msg) => (
+          messages.map((msg, index) => (
             <div
-              key={msg.id}
-              className={`mb-3 ${
-                msg.sender === "You" ? "text-right" : "text-left"
-              }`}
+              key={index}
+              className={`mb-3 ${msg.isOwn ? "text-right" : "text-left"}`}
             >
               <div
                 className={`inline-block max-w-[80%] px-3 py-2 rounded-lg text-sm ${
-                  msg.sender === "You"
+                  msg.isOwn
                     ? "bg-blue-100 text-blue-900"
                     : "bg-gray-200 text-gray-900"
                 }`}
               >
-                {msg.sender !== "You" && (
-                  <p className="font-medium text-xs text-gray-600 mb-1">
-                    {msg.sender}
-                  </p>
-                )}
-                <p className="break-words">{msg.text}</p>
-                <p className="text-xs text-gray-500 mt-1">{msg.timestamp}</p>
+                <p className="break-words">{msg.content}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(msg.timestamp).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
               </div>
             </div>
           ))
         )}
       </div>
 
-      {/* Message Input */}
       <div className="p-3 bg-white border-t border-gray-200">
         <div className="flex items-center">
           <input
