@@ -27,22 +27,12 @@ const EventCard = ({ event, onSelect, onEventJoin }) => {
   const { updateData } = useApi();
   const currentUser = useSelector((state) => state.auth.user);
 
-  // Debugging logs
-  console.log("currentUser._id:", currentUser._id);
-  console.log("attendees:", event.attendees);
-  console.log(
-    "attendee.userId._id:",
-    event.attendees.map((attendee) => attendee.userId._id)
-  );
-
   // Check if the current user has joined the event
   const isJoined = event.attendees.some(
     (attendee) => attendee.userId._id === currentUser._id
   );
 
   const isEventCreator = event.createdBy._id === currentUser._id;
-
-  console.log("[isJoined]", isJoined);
 
   const eventCardHandler = useCallback(() => {
     onSelect(event);
