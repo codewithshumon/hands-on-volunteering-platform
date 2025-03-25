@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useRef } from "react";
 import { FaUser, FaHeart, FaEdit, FaSave, FaTimes } from "react-icons/fa";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 import useApi from "../../hooks/useApi";
 import ProfileSkeleton from "../skeleton/ProfileSkeleton";
@@ -20,6 +20,8 @@ const Profile = () => {
   const [saveError, setSaveError] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  const currentUser = useSelector((state) => state.auth.user);
   const imgRef = useRef(null);
   const dispatch = useDispatch();
 
@@ -28,7 +30,7 @@ const Profile = () => {
   }, [imagePreview, profileImage]);
 
   useEffect(() => {
-    fetchData("/user/single-user");
+    fetchData(`/user/single-user/${currentUser._id}`);
   }, []);
 
   useEffect(() => {
@@ -107,6 +109,8 @@ const Profile = () => {
         ? user.volunteerHours.toFixed(0)
         : user.volunteerHours.toFixed(1)
       : "0";
+
+  console.log("[user in Profile]", user);
 
   return (
     <div className="md:col-span-1 bg-[#faf9f9] rounded-xl shadow-md p-6 h-fit relative">

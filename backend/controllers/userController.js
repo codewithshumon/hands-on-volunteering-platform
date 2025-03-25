@@ -21,6 +21,25 @@ export const getSingleUser = async (req, res) => {
   }
 };
 
+export const getAllUser = async (req, res) => {
+  try {
+    // Get all users excluding passwords
+    const users = await User.find().select("-password");
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+
+    res.status(200).json({
+      status: "success",
+      data: users,
+    });
+  } catch (err) {
+    console.log("[ERROR in getAllUser]", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 export const updateUser = async (req, res) => {
   try {
     const userId = req.user.id;

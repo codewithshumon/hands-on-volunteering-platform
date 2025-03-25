@@ -29,6 +29,7 @@ import LogHoursPage from "./pages/impact/LogHourPage";
 import VerifyPassword from "./pages/auth/VerifyPassword";
 import UserPublicProfile from "./pages/user/UserPublicProfile";
 import SearchFeed from "./pages/search/SearchFeed";
+import ChatsPage from "./pages/chat/ChatsPage";
 
 function App() {
   return (
@@ -95,6 +96,7 @@ function App() {
                       path="/user/profile/:userId"
                       element={<UserPublicProfile />}
                     />
+                    <Route path="/chats" element={<ChatsPage />} />
                     <Route path="/search" element={<SearchFeed />} />
                     <Route path="/dashboard" element={<UserDashboard />} />
                     <Route path="/events" element={<EventsPage />} />
