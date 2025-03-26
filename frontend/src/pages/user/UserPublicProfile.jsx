@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
+
 import useApi from "../../hooks/useApi";
 import ProfileSkeleton from "../../components/skeleton/ProfileSkeleton";
 import ChatBox from "../../components/chat/ChatBox";

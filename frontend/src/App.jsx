@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 
 import { Provider } from "react-redux";
+import SocketProvider from "./provider/SocketProvider";
 import store from "./store/store";
 import TokenExpirationChecker from "./components/global/TokenExpirationChecker";
 
@@ -35,98 +36,103 @@ function App() {
   return (
     <>
       <Provider store={store}>
-        <BrowserRouter>
-          <TokenExpirationChecker />
-          <Header />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            {/* <Route path="/text/EventFeedPage" element={<EventFeedPage />} /> */}
+        <SocketProvider>
+          <BrowserRouter>
+            <TokenExpirationChecker />
+            <Header />
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Home />} />
+              {/* <Route path="/text/EventFeedPage" element={<EventFeedPage />} /> */}
 
-            {/* user Routes */}
-            <Route
-              path="/auth"
-              element={
-                <AuthGuard type="user" url="/dashboard">
-                  <AuthPage />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/login"
-              element={
-                <AuthGuard type="user" url="/dashboard">
-                  <AuthPage isLoginPage={true} />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/signup"
-              element={
-                <AuthGuard type="user" url="/dashboard">
-                  <AuthPage isLoginPage={false} />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/verify-password"
-              element={
-                <AuthGuard type="user" url="/dashboard">
-                  <VerifyPassword />
-                </AuthGuard>
-              }
-            />
+              {/* user Routes */}
+              <Route
+                path="/auth"
+                element={
+                  <AuthGuard type="user" url="/dashboard">
+                    <AuthPage />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/login"
+                element={
+                  <AuthGuard type="user" url="/dashboard">
+                    <AuthPage isLoginPage={true} />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/signup"
+                element={
+                  <AuthGuard type="user" url="/dashboard">
+                    <AuthPage isLoginPage={false} />
+                  </AuthGuard>
+                }
+              />
+              <Route
+                path="/verify-password"
+                element={
+                  <AuthGuard type="user" url="/dashboard">
+                    <VerifyPassword />
+                  </AuthGuard>
+                }
+              />
 
-            {/* Protected Routes */}
-            <Route
-              path="/verify-email"
-              element={
-                <AuthGuard type="email" url="/login">
-                  <VerifyEmail />
-                </AuthGuard>
-              }
-            />
+              {/* Protected Routes */}
+              <Route
+                path="/verify-email"
+                element={
+                  <AuthGuard type="email" url="/login">
+                    <VerifyEmail />
+                  </AuthGuard>
+                }
+              />
 
-            <Route
-              path="/*"
-              element={
-                <AuthGuard type="non-user" url="/login">
-                  <Routes>
-                    <Route
-                      path="/user/profile/:userId"
-                      element={<UserPublicProfile />}
-                    />
-                    <Route path="/chats" element={<ChatsPage />} />
-                    <Route path="/search" element={<SearchFeed />} />
-                    <Route path="/dashboard" element={<UserDashboard />} />
-                    <Route path="/events" element={<EventsPage />} />
-                    <Route path="/community" element={<CommunityPage />} />
-                    <Route
-                      path="/community/:communityId"
-                      element={<CommunityFeedPage />}
-                    />
-                    <Route path="/teams" element={<TeamPage />} />
-                    <Route
-                      path="/teams/loader-page"
-                      element={<TeamsLeaderboardPage />}
-                    />
-                    <Route
-                      path="/teams/:teamId"
-                      element={<TeamDetailsPage />}
-                    />
-                    <Route path="/impact" element={<ImpactDashboard />} />
-                    <Route
-                      path="/impact/leader-board"
-                      element={<ImpactLeaderboardPage />}
-                    />
-                    <Route path="impact/log-hour" element={<LogHoursPage />} />
-                    <Route path="*" element={<PageNotFound />} />
-                  </Routes>
-                </AuthGuard>
-              }
-            />
-          </Routes>
-        </BrowserRouter>
+              <Route
+                path="/*"
+                element={
+                  <AuthGuard type="non-user" url="/login">
+                    <Routes>
+                      <Route
+                        path="/user/profile/:userId"
+                        element={<UserPublicProfile />}
+                      />
+                      <Route path="/chats" element={<ChatsPage />} />
+                      <Route path="/search" element={<SearchFeed />} />
+                      <Route path="/dashboard" element={<UserDashboard />} />
+                      <Route path="/events" element={<EventsPage />} />
+                      <Route path="/community" element={<CommunityPage />} />
+                      <Route
+                        path="/community/:communityId"
+                        element={<CommunityFeedPage />}
+                      />
+                      <Route path="/teams" element={<TeamPage />} />
+                      <Route
+                        path="/teams/loader-page"
+                        element={<TeamsLeaderboardPage />}
+                      />
+                      <Route
+                        path="/teams/:teamId"
+                        element={<TeamDetailsPage />}
+                      />
+                      <Route path="/impact" element={<ImpactDashboard />} />
+                      <Route
+                        path="/impact/leader-board"
+                        element={<ImpactLeaderboardPage />}
+                      />
+                      <Route
+                        path="impact/log-hour"
+                        element={<LogHoursPage />}
+                      />
+                      <Route path="*" element={<PageNotFound />} />
+                    </Routes>
+                  </AuthGuard>
+                }
+              />
+            </Routes>
+          </BrowserRouter>
+        </SocketProvider>
       </Provider>
     </>
   );
