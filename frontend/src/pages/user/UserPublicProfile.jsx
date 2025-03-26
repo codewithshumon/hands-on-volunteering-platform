@@ -7,7 +7,7 @@ import useApi from "../../hooks/useApi";
 import ProfileSkeleton from "../../components/skeleton/ProfileSkeleton";
 import ChatBox from "../../components/chat/ChatBox";
 import TopMembersSidebar from "../../components/user/public-profile/TopMembersSidebar";
-import PublicUserProfile from "../../components/user/public-profile/PublicUserProfile";
+import PublicViewUserProfile from "../../components/user/public-profile/PublicViewUserProfile";
 
 const UserPublicProfile = () => {
   const { userId } = useParams();
@@ -241,7 +241,7 @@ const UserPublicProfile = () => {
           isSidebarExpanded ? "w-3/4" : "w-full"
         } transition-all duration-300`}
       >
-        <PublicUserProfile
+        <PublicViewUserProfile
           user={user}
           onlineUsers={onlineUsers}
           volunteerHistory={volunteerHistory}
