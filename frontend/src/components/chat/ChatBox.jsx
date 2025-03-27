@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { FaTimes, FaMinus, FaComment, FaCircle } from "react-icons/fa";
 import { IoMdSend } from "react-icons/io";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import useApi from "../../hooks/useApi";
 
 const formatMessageTime = (timestamp) => {
@@ -41,6 +41,7 @@ const ChatBox = ({
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState([]);
   const messagesEndRef = useRef(null);
+  const dispatch = useDispatch();
   const socket = useSelector((state) => state.socket.socket);
 
   // Scroll to bottom of messages
@@ -68,119 +69,108 @@ const ChatBox = ({
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  // Handle incoming real-time messages
+  // Socket message handler
   useEffect(() => {
-    if (!socket || !currentUser?._id || !targetUser?._id) return;
+    if (!currentUser?._id || !targetUser?._id) return;
 
-    const handleIncomingMessage = (newMessage) => {
-      const senderId =
-        typeof newMessage.sender === "object"
-          ? newMessage.sender._id
-          : newMessage.sender;
-      const receiverId =
-        typeof newMessage.receiver === "object"
-          ? newMessage.receiver._id
-          : newMessage.receiver;
+    const handleSocketMessage = (message) => {
+      if (message.type === "status-update") {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.tempId === message.tempId
+              ? { ...msg, _id: message._id, status: message.status }
+              : msg._id === message._id
+              ? { ...msg, status: message.status }
+              : msg
+          )
+        );
+      } else if (message.type === "typing") {
+        if (message.userId === targetUser._id.toString()) {
+          setIsTyping(true);
+          if (typingTimeout) clearTimeout(typingTimeout);
+          setTypingTimeout(setTimeout(() => setIsTyping(false), 2000));
+        }
+      } else {
+        // Handle regular message
+        const senderId =
+          typeof message.sender === "object"
+            ? message.sender._id
+            : message.sender;
+        const receiverId =
+          typeof message.receiver === "object"
+            ? message.receiver._id
+            : message.receiver;
 
-      if (
-        (senderId === targetUser._id.toString() &&
-          receiverId === currentUser._id.toString()) ||
-        (senderId === currentUser._id.toString() &&
-          receiverId === targetUser._id.toString())
-      ) {
-        setMessages((prev) => {
-          // Remove temp message if exists
-          const filtered = prev.filter(
-            (m) => !m.tempId || m.tempId !== newMessage.tempId
-          );
-          return [
-            ...filtered,
-            {
-              ...normalizeMessage(newMessage),
-              isOwn: senderId === currentUser._id.toString(),
-              status: newMessage.status || "delivered",
-            },
-          ];
-        });
+        if (
+          (senderId === targetUser._id.toString() &&
+            receiverId === currentUser._id.toString()) ||
+          (senderId === currentUser._id.toString() &&
+            receiverId === targetUser._id.toString())
+        ) {
+          setMessages((prev) => {
+            const filtered = prev.filter(
+              (m) => !m.tempId || m.tempId !== message.tempId
+            );
+            return [
+              ...filtered,
+              {
+                ...normalizeMessage(message),
+                isOwn: senderId === currentUser._id.toString(),
+                status: message.status || "delivered",
+              },
+            ];
+          });
 
-        if (senderId === targetUser._id.toString() && isMinimized) {
-          setHasNewMessage(true);
-          setUnreadMessages((prev) => [...prev, newMessage._id]);
+          if (senderId === targetUser._id.toString() && isMinimized) {
+            setHasNewMessage(true);
+            setUnreadMessages((prev) => [...prev, message._id]);
+          }
         }
       }
     };
 
-    const handleTypingIndicator = (data) => {
-      if (data.userId === targetUser._id.toString()) {
-        setIsTyping(true);
-        if (typingTimeout) clearTimeout(typingTimeout);
-        setTypingTimeout(setTimeout(() => setIsTyping(false), 2000));
-      }
-    };
-
-    const handleMessagesRead = (data) => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          data.messageIds.includes(msg._id)
-            ? { ...msg, read: true, status: "read" }
-            : msg
-        )
-      );
-    };
-
-    const handleMessageStatusUpdate = (data) => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.tempId === data.tempId
-            ? {
-                ...msg,
-                _id: data._id,
-                status: data.status,
-                timestamp: new Date(data.timestamp),
-              }
-            : msg._id === data._id
-            ? { ...msg, status: data.status }
-            : msg
-        )
-      );
-    };
-
-    socket.on("receive-message", handleIncomingMessage);
-    socket.on("typing", handleTypingIndicator);
-    socket.on("messages-read", handleMessagesRead);
-    socket.on("message-status", handleMessageStatusUpdate);
+    dispatch({
+      type: "socket/addMessageListener",
+      payload: handleSocketMessage,
+    });
 
     return () => {
-      socket.off("receive-message", handleIncomingMessage);
-      socket.off("typing", handleTypingIndicator);
-      socket.off("messages-read", handleMessagesRead);
-      socket.off("message-status", handleMessageStatusUpdate);
+      dispatch({
+        type: "socket/removeMessageListener",
+        payload: handleSocketMessage,
+      });
       if (typingTimeout) clearTimeout(typingTimeout);
     };
-  }, [socket, currentUser?._id, targetUser?._id, isMinimized]);
+  }, [dispatch, currentUser?._id, targetUser?._id, isMinimized, typingTimeout]);
 
   // Mark messages as read when chat is opened
   useEffect(() => {
     if (!isMinimized && unreadMessages.length > 0 && socket) {
-      socket.emit("mark-as-read", {
-        messageIds: unreadMessages,
-        readerId: currentUser._id,
+      dispatch({
+        type: "socket/markAsRead",
+        payload: {
+          messageIds: unreadMessages,
+          readerId: currentUser._id,
+        },
       });
       setUnreadMessages([]);
       setHasNewMessage(false);
     }
-  }, [isMinimized, unreadMessages, socket, currentUser?._id]);
+  }, [isMinimized, unreadMessages, socket, currentUser?._id, dispatch]);
 
   // Handle typing indicator
   const handleTyping = useCallback(() => {
     if (socket && message.trim() && currentUser?._id && targetUser?._id) {
-      socket.emit("typing", {
-        senderId: currentUser._id,
-        receiverId: targetUser._id,
-        isTyping: true,
+      dispatch({
+        type: "socket/typing",
+        payload: {
+          senderId: currentUser._id,
+          receiverId: targetUser._id,
+          isTyping: true,
+        },
       });
     }
-  }, [socket, message, currentUser?._id, targetUser?._id]);
+  }, [socket, message, currentUser?._id, targetUser?._id, dispatch]);
 
   useEffect(() => {
     const timer = setTimeout(handleTyping, 500);
@@ -226,120 +216,78 @@ const ChatBox = ({
     fetchMessages();
   }, [fetchMessages]);
 
-  // In ChatBox component
   const handleSendMessage = async () => {
-    if (!message.trim()) {
-      console.log("Message is empty, not sending");
+    if (!message.trim() || !currentUser?._id || !targetUser?._id) return;
+    if (currentUser._id === targetUser._id) {
+      setSendError("You cannot send messages to yourself");
       return;
     }
 
-    if (!currentUser?._id || !targetUser?._id) {
-      console.error(
-        "Missing user IDs - current:",
-        currentUser?._id,
-        "target:",
-        targetUser?._id
-      );
-      return;
-    }
-
-    const tempId = `temp-${Date.now()}`;
+    setSendError(null);
+    const timestamp = new Date();
+    const tempId = `temp-${timestamp.getTime()}`;
     const tempMessage = {
       _id: tempId,
       sender: currentUser._id,
       receiver: targetUser._id,
       content: message.trim(),
-      timestamp: new Date(),
+      timestamp,
       isOwn: true,
       status: "sending",
       tempId,
     };
 
-    console.log("Adding temporary message:", tempMessage);
     setMessages((prev) => [...prev, tempMessage]);
     setMessage("");
 
     try {
-      console.log("Fetching conversation...");
-      const convResponse = await fetchData(
+      // First find or create conversation
+      const conversationResponse = await fetchData(
         `/message/conversations/${currentUser._id}`
       );
-      const conversations = convResponse?.data || [];
-      console.log("Found conversations:", conversations);
+      const conversations = Array.isArray(conversationResponse?.data)
+        ? conversationResponse.data
+        : [];
 
-      let conversation = conversations.find((c) =>
-        c.participants.includes(targetUser._id)
+      let conversation = conversations.find((conv) =>
+        conv.participants.includes(targetUser._id)
       );
 
       if (!conversation) {
-        console.log("No existing conversation, creating new one");
-        const newConv = await updateData("/message", "POST", {
+        const newConvResponse = await updateData("/message", "POST", {
           sender: currentUser._id,
           receiver: targetUser._id,
           content: message.trim(),
         });
-        conversation = { _id: newConv.data?.conversation._id };
-        console.log("Created new conversation:", conversation);
+        conversation = { _id: newConvResponse.data?.conversation._id };
       }
 
-      console.log("Sending via socket with payload:", {
-        senderId: currentUser._id,
-        receiverId: targetUser._id,
-        content: message.trim(),
-        conversationId: conversation._id,
-        tempId,
-      });
-
-      socket.emit(
-        "send-message",
-        {
+      // Send via socket
+      dispatch({
+        type: "socket/sendMessage",
+        payload: {
           senderId: currentUser._id,
           receiverId: targetUser._id,
           content: message.trim(),
           conversationId: conversation._id,
           tempId,
         },
-        (ack) => {
-          console.log("Received acknowledgment: in Chatbox", ack);
-          if (ack?.error) {
-            console.error("[Message send failed in Chatbox]", ack.error);
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.tempId === tempId ? { ...msg, status: "failed" } : msg
-              )
-            );
-            setSendError(ack.error);
-          } else {
-            console.log(
-              "[Message successfully delivered, updating status in Chatbox]"
-            );
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.tempId === tempId
-                  ? {
-                      ...msg,
-                      _id: ack._id,
-                      status: ack.status,
-                      timestamp: new Date(ack.timestamp),
-                    }
-                  : msg
-              )
-            );
-          }
-        }
-      );
+      });
 
       // Stop typing indicator
-      socket.emit("typing", {
-        senderId: currentUser._id,
-        receiverId: targetUser._id,
-        isTyping: false,
+      dispatch({
+        type: "socket/typing",
+        payload: {
+          senderId: currentUser._id,
+          receiverId: targetUser._id,
+          isTyping: false,
+        },
       });
     } catch (error) {
       console.error("Message send error:", error);
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.tempId === tempId ? { ...msg, status: "failed" } : msg
+          msg._id === tempId ? { ...msg, status: "failed" } : msg
         )
       );
       setSendError(error.response?.data?.error || "Failed to send message");
