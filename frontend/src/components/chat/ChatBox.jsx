@@ -1,7 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
-import { FaTimes, FaMinus, FaComment, FaCircle } from "react-icons/fa";
+import { FaTimes, FaMinus, FaComment } from "react-icons/fa";
+import { IoMdSend } from "react-icons/io";
 import { useDispatch } from "react-redux";
 import useApi from "../../hooks/useApi";
+
+const formatMessageTime = (timestamp) => {
+  try {
+    const date = timestamp instanceof Date ? timestamp : new Date(timestamp);
+    if (isNaN(date.getTime())) return "--:--";
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch (e) {
+    console.error("Error formatting timestamp:", timestamp, e);
+    return "--:--";
+  }
+};
 
 const ChatBox = ({
   currentUser,
@@ -27,15 +39,31 @@ const ChatBox = ({
 
   const dispatch = useDispatch();
 
+  const normalizeMessage = (msg) => ({
+    ...msg,
+    timestamp: msg.timestamp
+      ? new Date(msg.timestamp)
+      : msg.createdAt
+      ? new Date(msg.createdAt)
+      : new Date(),
+  });
+
   const handleMessage = useCallback(
     (message) => {
       if (!message.sender || !message.receiver) return;
-      if (message.sender === currentUser._id) return;
+
+      const senderId =
+        typeof message.sender === "object"
+          ? message.sender._id
+          : message.sender;
+
+      const isOwn = senderId === currentUser._id.toString();
+      if (isOwn) return;
 
       setMessages((prev) => [
         ...prev,
         {
-          ...message,
+          ...normalizeMessage(message),
           isOwn: false,
           status: "delivered",
         },
@@ -68,11 +96,16 @@ const ChatBox = ({
           ? response
           : [];
 
-        const formattedMessages = receivedMessages.map((msg) => ({
-          ...msg,
-          isOwn: msg.sender.toString() === currentUser._id.toString(),
-          status: "delivered",
-        }));
+        const formattedMessages = receivedMessages.map((msg) => {
+          const senderId =
+            typeof msg.sender === "object" ? msg.sender._id : msg.sender;
+
+          return {
+            ...normalizeMessage(msg),
+            isOwn: senderId === currentUser._id.toString(),
+            status: "delivered",
+          };
+        });
 
         setMessages(formattedMessages);
       } catch (error) {
@@ -104,16 +137,16 @@ const ChatBox = ({
   }, [dispatch, currentUser?._id, targetUser?._id, handleMessage]);
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !currentUser?._id || !targetUser?._id) return;
+    if (!message.trim() || !currentUser?._id || !targetUser._id) return;
     if (currentUser._id === targetUser._id) {
       setSendError("You cannot send messages to yourself");
       return;
     }
 
     setSendError(null);
-    const timestamp = new Date().toISOString();
+    const timestamp = new Date();
     const tempMessage = {
-      _id: `temp-${timestamp}`,
+      _id: `temp-${timestamp.getTime()}`,
       sender: currentUser._id,
       receiver: targetUser._id,
       content: message.trim(),
@@ -126,29 +159,31 @@ const ChatBox = ({
     setMessage("");
 
     try {
-      // Send via socket
       dispatch({
         type: "socket/sendMessage",
         payload: {
           senderId: currentUser._id,
           receiverId: targetUser._id,
           content: message.trim(),
-          timestamp,
+          timestamp: timestamp.toISOString(),
         },
       });
 
-      // Persist to database
       const response = await updateData("/message", "POST", {
         sender: currentUser._id,
         receiver: targetUser._id,
         content: message.trim(),
       });
 
-      // Update message status
       setMessages((prev) =>
         prev.map((msg) =>
-          msg._id === `temp-${timestamp}`
-            ? { ...msg, _id: response.data?._id, status: "delivered" }
+          msg._id === `temp-${timestamp.getTime()}`
+            ? {
+                ...msg,
+                _id: response.data?._id,
+                status: "delivered",
+                timestamp: new Date(response.data?.createdAt || Date.now()),
+              }
             : msg
         )
       );
@@ -157,7 +192,9 @@ const ChatBox = ({
       setSendError(error.response?.data?.error || "Failed to send message");
       setMessages((prev) =>
         prev.map((msg) =>
-          msg._id === `temp-${timestamp}` ? { ...msg, status: "failed" } : msg
+          msg._id === `temp-${timestamp.getTime()}`
+            ? { ...msg, status: "failed" }
+            : msg
         )
       );
     }
@@ -172,61 +209,91 @@ const ChatBox = ({
   if (isMinimized) {
     return (
       <div
-        className={`relative bg-blue-700 text-white rounded-t-lg shadow-lg cursor-pointer flex items-center p-2 hover:bg-blue-800 transition-colors ${
-          isMobile ? "w-full" : ""
+        className={`relative bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg shadow-xl cursor-pointer flex items-center justify-between p-3 hover:from-blue-700 hover:to-blue-600 transition-all ${
+          isMobile ? "w-full" : "w-64"
         }`}
         onClick={onOpen}
       >
-        <div className="flex items-center">
-          <div className="relative mr-2">
-            <FaComment />
-            {isOnline && (
-              <FaCircle className="absolute -top-1 -right-1 text-xs text-green-300" />
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <img
+              src={targetUser?.profileImage}
+              alt={targetUser?.name}
+              className="w-8 h-8 rounded-full object-cover border-2 border-white"
+              onError={(e) => {
+                e.target.src = "https://placehold.co/400";
+              }}
+            />
+            <div
+              className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                isOnline ? "bg-green-400" : "bg-gray-400"
+              }`}
+            ></div>
+          </div>
+          <div>
+            <span className="font-medium">{targetUser?.name}</span>
+            {hasNewMessage && (
+              <span className="ml-2 px-1.5 py-0.5 bg-blue-800 text-xs rounded-full animate-pulse">
+                New
+              </span>
             )}
           </div>
-          <span className="font-medium">{targetUser?.name}</span>
-          {hasNewMessage && (
-            <span className="ml-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-          )}
         </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="hover:text-red-200 transition-colors"
+        >
+          <FaTimes />
+        </button>
       </div>
     );
   }
 
   return (
     <div
-      className={`bg-white rounded-t-lg shadow-lg overflow-hidden ${
-        isMobile ? "fixed inset-0 z-50 rounded-none" : "w-80"
+      className={`flex flex-col bg-white rounded-lg shadow-xl overflow-hidden ${
+        isMobile ? "fixed inset-0 z-50" : "w-96 h-[500px]"
       }`}
     >
-      <div className="flex justify-between items-center bg-blue-700 text-white p-3">
-        <div>
-          <h3 className="font-semibold text-lg">{targetUser?.name}</h3>
-          <div className="flex items-center text-xs mt-1">
-            {isOnline ? (
-              <>
-                <FaCircle className="mr-1.5 text-xs text-green-300" />
-                <span>Online</span>
-              </>
-            ) : (
-              <>
-                <FaCircle className="mr-1.5 text-xs text-gray-300" />
-                <span>Offline</span>
-              </>
-            )}
+      {/* Header */}
+      <div className="flex justify-between items-center bg-gradient-to-r from-blue-600 to-blue-500 text-white p-4">
+        <div className="flex items-center space-x-3">
+          <div className="relative">
+            <img
+              src={targetUser?.profileImage}
+              alt={targetUser?.name}
+              className="w-10 h-10 rounded-full object-cover border-2 border-white"
+              onError={(e) => {
+                e.target.src = "https://placehold.co/400";
+              }}
+            />
+            <div
+              className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                isOnline ? "bg-green-400" : "bg-gray-400"
+              }`}
+            ></div>
+          </div>
+          <div>
+            <h3 className="font-semibold">{targetUser?.name}</h3>
+            <p className="text-xs opacity-80">
+              {isOnline ? "Online" : "Offline"}
+            </p>
           </div>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex space-x-4">
           <button
             onClick={onMinimize}
-            className="hover:text-green-200 transition-colors"
+            className="hover:text-blue-200 transition-colors"
             aria-label="Minimize chat"
           >
             <FaMinus />
           </button>
           <button
             onClick={onClose}
-            className="hover:text-green-200 transition-colors"
+            className="hover:text-red-200 transition-colors"
             aria-label="Close chat"
           >
             <FaTimes />
@@ -234,9 +301,10 @@ const ChatBox = ({
         </div>
       </div>
 
+      {/* Messages */}
       <div
-        className={`p-3 overflow-y-auto bg-gray-50 ${
-          isMobile ? "h-[calc(100vh-120px)]" : "h-60"
+        className={`flex-1 p-4 overflow-y-auto bg-gray-50 ${
+          isMobile ? "h-[calc(100vh-120px)]" : ""
         }`}
       >
         {loadingMessages ? (
@@ -245,55 +313,70 @@ const ChatBox = ({
             <p className="mt-2 text-gray-500">Loading messages...</p>
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-gray-500">
-            <p>No messages yet</p>
+          <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-3">
+              <FaComment className="w-8 h-8 text-blue-500" />
+            </div>
+            <p className="font-medium">No messages yet</p>
             <p className="text-sm mt-1">
               Start chatting with {targetUser?.name}
             </p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <div
-              key={msg._id || msg.timestamp}
-              className={`mb-3 flex ${
-                msg.isOwn ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[80%] px-3 py-2 rounded-lg text-sm ${
-                  msg.isOwn
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-900"
-                } ${msg.status === "failed" ? "opacity-70" : ""}`}
-              >
-                <p className="break-words">{msg.content}</p>
-                <p
-                  className={`text-xs mt-1 ${
-                    msg.isOwn ? "text-blue-100" : "text-gray-500"
-                  }`}
+          <div className="space-y-3">
+            {messages.map((msg) => {
+              const senderId =
+                typeof msg.sender === "object" ? msg.sender._id : msg.sender;
+              const isOwn = senderId === currentUser._id.toString();
+
+              return (
+                <div
+                  key={msg._id || msg.timestamp?.getTime() || Math.random()}
+                  className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                 >
-                  {new Date(msg.timestamp).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  {msg.status === "sending" && " (Sending...)"}
-                  {msg.status === "failed" && " (Failed)"}
-                </p>
-              </div>
-            </div>
-          ))
+                  <div
+                    className={`max-w-[80%] px-4 py-3 rounded-2xl ${
+                      isOwn
+                        ? "bg-blue-500 text-white rounded-tr-none"
+                        : "bg-gray-200 text-gray-800 rounded-tl-none"
+                    } ${msg.status === "failed" ? "opacity-70" : ""}`}
+                  >
+                    <p className="break-words">{msg.content}</p>
+                    <div className="flex items-center justify-end mt-1 space-x-2">
+                      {msg.status === "sending" && (
+                        <span className="text-xs text-blue-100">
+                          Sending...
+                        </span>
+                      )}
+                      {msg.status === "failed" && (
+                        <span className="text-xs text-red-100">Failed</span>
+                      )}
+                      <p
+                        className={`text-xs ${
+                          isOwn ? "text-blue-100" : "text-gray-500"
+                        }`}
+                      >
+                        {formatMessageTime(msg.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
 
-      <div className="p-3 bg-white border-t border-gray-200">
-        <div className="flex items-center">
+      {/* Input */}
+      <div className="p-4 bg-white border-t border-gray-200">
+        <div className="flex items-center space-x-2">
           <input
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder={`Message ${targetUser?.name}`}
-            className="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
+            className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             disabled={apiLoading}
           />
           <button
@@ -303,15 +386,15 @@ const ChatBox = ({
               apiLoading ||
               currentUser?._id === targetUser?._id
             }
-            className={`px-4 py-2 rounded-r-lg text-sm ${
+            className={`p-2 rounded-full ${
               message.trim() &&
               !apiLoading &&
               currentUser?._id !== targetUser?._id
-                ? "bg-green-500 hover:bg-green-600 text-white"
+                ? "bg-blue-500 hover:bg-blue-600 text-white"
                 : "bg-gray-200 text-gray-500 cursor-not-allowed"
             } transition-colors`}
           >
-            {apiLoading ? "Sending..." : "Send"}
+            <IoMdSend className="w-5 h-5" />
           </button>
         </div>
         {sendError && <p className="text-red-500 text-xs mt-1">{sendError}</p>}

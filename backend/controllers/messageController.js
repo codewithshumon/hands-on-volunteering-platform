@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Message from "../models/message/MessageSchema.js";
 import Conversation from "../models/message/ConversationSchema.js";
 
@@ -65,10 +66,17 @@ export const getConversations = async (req, res) => {
 };
 
 // Get messages between two users
-
 export const getMessages = async (req, res) => {
   try {
     const { senderId, receiverId } = req.params;
+
+    // Validate input
+    if (
+      !mongoose.Types.ObjectId.isValid(senderId) ||
+      !mongoose.Types.ObjectId.isValid(receiverId)
+    ) {
+      return res.status(400).json({ error: "Invalid user IDs" });
+    }
 
     const messages = await Message.find({
       $or: [
@@ -77,23 +85,62 @@ export const getMessages = async (req, res) => {
       ],
     })
       .sort({ createdAt: 1 })
-      .populate("sender", "name avatar")
-      .populate("receiver", "name avatar");
+      .populate({
+        path: "sender",
+        select: "_id name profileImage",
+        model: "User",
+      })
+      .populate({
+        path: "receiver",
+        select: "_id name profileImage",
+        model: "User",
+      })
+      .lean(); // Convert to plain JavaScript objects
 
-    // Mark messages as read
-    await Message.updateMany(
-      { sender: receiverId, receiver: senderId, read: false },
-      { $set: { read: true } }
-    );
+    // Mark messages as read and update conversation
+    await Promise.all([
+      Message.updateMany(
+        {
+          sender: receiverId,
+          receiver: senderId,
+          read: false,
+        },
+        { $set: { read: true } }
+      ),
+      Conversation.updateOne(
+        {
+          participants: { $all: [senderId, receiverId] },
+        },
+        {
+          $set: { unreadCount: 0 },
+          $currentDate: { lastRead: true },
+        }
+      ),
+    ]);
 
-    await Conversation.updateOne(
-      { participants: { $all: [senderId, receiverId] } },
-      { $set: { unreadCount: 0 } }
-    );
+    // Format the response
+    const formattedMessages = messages.map((message) => ({
+      ...message,
+      isOwn: message.sender._id.toString() === senderId,
+      sender: {
+        _id: message.sender._id,
+        name: message.sender.name,
+        avatar: message.sender.profileImage, // Using profileImage field
+      },
+      receiver: {
+        _id: message.receiver._id,
+        name: message.receiver.name,
+        avatar: message.receiver.profileImage, // Using profileImage field
+      },
+    }));
 
-    res.status(200).json(messages);
+    res.status(200).json(formattedMessages);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("[ERROR in getMessages]:", error);
+    res.status(500).json({
+      error: "Failed to fetch messages",
+      details: error.message,
+    });
   }
 };
 
