@@ -16,9 +16,8 @@ const UserPublicProfile = () => {
   const [volunteerHistory, setVolunteerHistory] = useState([]);
   const [activeChats, setActiveChats] = useState([]);
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
-  const [pendingMessages, setPendingMessages] = useState({});
 
-  const { onlineUsers, isConnected } = useSelector((state) => state.socket);
+  const { onlineUsers } = useSelector((state) => state.socket);
   const currentUser = useSelector((state) => state.auth.user);
 
   // Fetch user data
@@ -44,69 +43,6 @@ const UserPublicProfile = () => {
     }
   }, [user]);
 
-  // Handle incoming messages
-  useEffect(() => {
-    if (!isConnected) return;
-
-    const handleMessage = (message) => {
-      // Skip if this is our own optimistic message
-      if (pendingMessages[message.timestamp]) {
-        setPendingMessages((prev) => {
-          const newPending = { ...prev };
-          delete newPending[message.timestamp];
-          return newPending;
-        });
-        return;
-      }
-
-      setActiveChats((prevChats) => {
-        const chatUserId = message.isOwn
-          ? message.receiverId
-          : message.senderId;
-        const existingChat = prevChats.find(
-          (chat) => chat.userId === chatUserId
-        );
-
-        if (!existingChat) {
-          return [
-            ...prevChats,
-            {
-              userId: chatUserId,
-              user: {
-                _id: chatUserId,
-                name: message.senderName || "Unknown User",
-              },
-              isMinimized: true,
-              messages: [message],
-              hasNewMessage: true,
-            },
-          ];
-        }
-
-        return prevChats.map((chat) =>
-          chat.userId === chatUserId
-            ? {
-                ...chat,
-                messages: [...chat.messages, message],
-                hasNewMessage: chat.isMinimized,
-              }
-            : chat
-        );
-      });
-    };
-
-    // Register the message listener
-    dispatch({ type: "socket/listenForMessages", payload: handleMessage });
-
-    // Cleanup
-    return () => {
-      dispatch({
-        type: "socket/removeMessageListener",
-        payload: handleMessage,
-      });
-    };
-  }, [isConnected, dispatch, pendingMessages]);
-
   const openChat = (targetUser) => {
     setActiveChats((prevChats) => {
       const existingChat = prevChats.find(
@@ -120,16 +56,12 @@ const UserPublicProfile = () => {
             userId: targetUser._id,
             user: targetUser,
             isMinimized: false,
-            messages: [],
-            hasNewMessage: false,
           },
         ];
       }
 
       return prevChats.map((chat) =>
-        chat.userId === targetUser._id
-          ? { ...chat, isMinimized: false, hasNewMessage: false }
-          : chat
+        chat.userId === targetUser._id ? { ...chat, isMinimized: false } : chat
       );
     });
   };
@@ -144,56 +76,10 @@ const UserPublicProfile = () => {
     setActiveChats((prevChats) =>
       prevChats.map((chat) =>
         chat.userId === userId
-          ? { ...chat, isMinimized: !chat.isMinimized, hasNewMessage: false }
+          ? { ...chat, isMinimized: !chat.isMinimized }
           : chat
       )
     );
-  };
-
-  const sendMessage = (chatUserId, messageContent) => {
-    if (!isConnected || !currentUser?._id || !messageContent.trim()) return;
-
-    const timestamp = new Date().toISOString();
-
-    // Create the message object
-    const message = {
-      receiverId: chatUserId,
-      content: messageContent.trim(),
-      timestamp, // Use the same timestamp for tracking
-    };
-
-    // Optimistic UI update
-    const optimisticMessage = {
-      senderId: currentUser._id,
-      receiverId: chatUserId,
-      content: messageContent.trim(),
-      timestamp,
-      isOwn: true,
-      status: "sending",
-    };
-
-    // Track this pending message
-    setPendingMessages((prev) => ({
-      ...prev,
-      [timestamp]: true,
-    }));
-
-    setActiveChats((prevChats) =>
-      prevChats.map((chat) =>
-        chat.userId === chatUserId
-          ? {
-              ...chat,
-              messages: [...chat.messages, optimisticMessage],
-            }
-          : chat
-      )
-    );
-
-    // Send via Redux middleware
-    dispatch({
-      type: "socket/sendMessage",
-      payload: message,
-    });
   };
 
   const toggleSidebar = () => {
@@ -259,15 +145,13 @@ const UserPublicProfile = () => {
             style={{ marginRight: "20px" }}
           >
             <ChatBox
-              user={chat.user}
-              messages={chat.messages}
+              currentUser={currentUser}
+              targetUser={chat.user}
+              isMinimized={chat.isMinimized}
+              isOnline={!!onlineUsers[chat.userId]}
               onClose={() => closeChat(chat.userId)}
               onMinimize={() => toggleMinimize(chat.userId)}
               onOpen={() => toggleMinimize(chat.userId)}
-              isMinimized={chat.isMinimized}
-              hasNewMessage={chat.hasNewMessage}
-              isOnline={onlineUsers[chat.userId]}
-              onSendMessage={(message) => sendMessage(chat.userId, message)}
             />
           </div>
         ))}

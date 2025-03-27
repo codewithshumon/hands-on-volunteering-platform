@@ -9,7 +9,7 @@ import {
 
 export const socketMiddleware = (store) => {
   let socket = null;
-  let messageListeners = [];
+  const messageListeners = new Map();
 
   return (next) => (action) => {
     const { dispatch } = store;
@@ -25,7 +25,6 @@ export const socketMiddleware = (store) => {
             }
           );
 
-          // Connection handlers
           socket.on("connect", () => {
             dispatch(connectionEstablished(action.payload));
             socket.emit("authenticate", action.payload);
@@ -35,26 +34,17 @@ export const socketMiddleware = (store) => {
             dispatch(connectionLost());
           });
 
-          // Message handler
           socket.on("receive-message", (message) => {
-            messageListeners.forEach((listener) => {
-              if (typeof listener === "function") {
-                listener(message);
-              }
-            });
+            const listenerId = `chat-${message.senderId}-${message.receiverId}`;
+            const handler = messageListeners.get(listenerId);
+            if (handler) handler(message);
           });
 
-          // Presence handlers
-          socket.on("user-online", (userId) => {
-            dispatch(userOnline(userId));
-          });
-
-          socket.on("user-offline", (userId) => {
-            dispatch(userOffline(userId));
-          });
-
-          socket.on("online-users", (users) => {
-            dispatch(setOnlineUsers(users));
+          socket.on("user-online", (userId) => dispatch(userOnline(userId)));
+          socket.on("user-offline", (userId) => dispatch(userOffline(userId)));
+          socket.on("online-users", (users) => dispatch(setOnlineUsers(users)));
+          socket.on("message-error", (error) => {
+            console.error("Socket error:", error);
           });
         }
         break;
@@ -63,55 +53,32 @@ export const socketMiddleware = (store) => {
         if (socket) {
           socket.disconnect();
           socket = null;
-          messageListeners = [];
+          messageListeners.clear();
           dispatch(connectionLost());
         }
         break;
 
       case "socket/sendMessage":
-        if (socket && socket.connected) {
-          const state = store.getState();
-          const message = {
-            ...action.payload,
-            senderId: state.auth.user?._id,
-            timestamp: new Date().toISOString(),
-          };
-          socket.emit("send-message", message, (response) => {
-            if (response.status === "success") {
-              dispatch({
-                type: "chat/messageDelivered",
-                payload: response.message,
-              });
-            } else {
-              dispatch({
-                type: "chat/messageFailed",
-                payload: {
-                  error: response.error,
-                  originalMessage: message,
-                },
-              });
-            }
-          });
+        if (socket?.connected) {
+          socket.emit("send-message", action.payload);
         }
         break;
 
-      case "socket/listenForMessages":
-      case "chat/startListening":
-        if (typeof action.payload === "function") {
-          messageListeners.push(action.payload);
+      case "socket/registerMessageListener":
+        if (action.payload.listenerId && action.payload.handler) {
+          messageListeners.set(
+            action.payload.listenerId,
+            action.payload.handler
+          );
         }
         break;
 
-      case "socket/removeMessageListener":
-        messageListeners = messageListeners.filter(
-          (listener) => listener !== action.payload
-        );
+      case "socket/unregisterMessageListener":
+        messageListeners.delete(action.payload);
         break;
 
       default:
-        break;
+        return next(action);
     }
-
-    return next(action);
   };
 };
