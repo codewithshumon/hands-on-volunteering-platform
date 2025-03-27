@@ -46,6 +46,8 @@ export const sendMessage = async (req, res) => {
       .populate("receiver", "name profileImage")
       .lean();
 
+    console.log("[populatedMessage in sendMessage]", populatedMessage);
+
     res.status(201).json({
       ...populatedMessage,
       conversationId: conversation._id,

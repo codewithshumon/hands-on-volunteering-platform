@@ -300,9 +300,9 @@ const ChatBox = ({
           tempId,
         },
         (ack) => {
-          console.log("Received acknowledgment:", ack);
+          console.log("Received acknowledgment: in Chatbox", ack);
           if (ack?.error) {
-            console.error("Message send failed:", ack.error);
+            console.error("[Message send failed in Chatbox]", ack.error);
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.tempId === tempId ? { ...msg, status: "failed" } : msg
@@ -310,7 +310,9 @@ const ChatBox = ({
             );
             setSendError(ack.error);
           } else {
-            console.log("Message successfully delivered, updating status");
+            console.log(
+              "[Message successfully delivered, updating status in Chatbox]"
+            );
             setMessages((prev) =>
               prev.map((msg) =>
                 msg.tempId === tempId
