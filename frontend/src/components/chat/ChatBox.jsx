@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
-import { FaTimes, FaMinus, FaComment } from "react-icons/fa";
+/* eslint-disable react-hooks/exhaustive-deps */
+import { useState, useEffect, useCallback, useRef } from "react";
+import { FaTimes, FaMinus, FaComment, FaCircle } from "react-icons/fa";
 import { IoMdSend } from "react-icons/io";
-import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
 import useApi from "../../hooks/useApi";
 
 const formatMessageTime = (timestamp) => {
@@ -36,8 +37,20 @@ const ChatBox = ({
   const [isMobile, setIsMobile] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sendError, setSendError] = useState(null);
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState(null);
+  const [unreadMessages, setUnreadMessages] = useState([]);
+  const messagesEndRef = useRef(null);
+  const socket = useSelector((state) => state.socket.socket);
 
-  const dispatch = useDispatch();
+  // Scroll to bottom of messages
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const normalizeMessage = (msg) => ({
     ...msg,
@@ -48,31 +61,6 @@ const ChatBox = ({
       : new Date(),
   });
 
-  const handleMessage = useCallback(
-    (message) => {
-      if (!message.sender || !message.receiver) return;
-
-      const senderId =
-        typeof message.sender === "object"
-          ? message.sender._id
-          : message.sender;
-
-      const isOwn = senderId === currentUser._id.toString();
-      if (isOwn) return;
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          ...normalizeMessage(message),
-          isOwn: false,
-          status: "delivered",
-        },
-      ]);
-      if (isMinimized) setHasNewMessage(true);
-    },
-    [currentUser?._id, isMinimized]
-  );
-
   useEffect(() => {
     const checkIfMobile = () => setIsMobile(window.innerWidth <= 768);
     checkIfMobile();
@@ -80,128 +68,285 @@ const ChatBox = ({
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
+  // Handle incoming real-time messages
   useEffect(() => {
-    if (!currentUser?._id || !targetUser?._id) return;
+    if (!socket || !currentUser?._id || !targetUser?._id) return;
 
-    const fetchMessages = async () => {
-      setLoadingMessages(true);
-      try {
-        const response = await fetchData(
-          `/message/${currentUser._id}/${targetUser._id}`
-        );
+    const handleIncomingMessage = (newMessage) => {
+      const senderId =
+        typeof newMessage.sender === "object"
+          ? newMessage.sender._id
+          : newMessage.sender;
+      const receiverId =
+        typeof newMessage.receiver === "object"
+          ? newMessage.receiver._id
+          : newMessage.receiver;
 
-        const receivedMessages = Array.isArray(response?.data)
-          ? response.data
-          : Array.isArray(response)
-          ? response
-          : [];
-
-        const formattedMessages = receivedMessages.map((msg) => {
-          const senderId =
-            typeof msg.sender === "object" ? msg.sender._id : msg.sender;
-
-          return {
-            ...normalizeMessage(msg),
-            isOwn: senderId === currentUser._id.toString(),
-            status: "delivered",
-          };
+      if (
+        (senderId === targetUser._id.toString() &&
+          receiverId === currentUser._id.toString()) ||
+        (senderId === currentUser._id.toString() &&
+          receiverId === targetUser._id.toString())
+      ) {
+        setMessages((prev) => {
+          // Remove temp message if exists
+          const filtered = prev.filter(
+            (m) => !m.tempId || m.tempId !== newMessage.tempId
+          );
+          return [
+            ...filtered,
+            {
+              ...normalizeMessage(newMessage),
+              isOwn: senderId === currentUser._id.toString(),
+              status: newMessage.status || "delivered",
+            },
+          ];
         });
 
-        setMessages(formattedMessages);
-      } catch (error) {
-        console.error("Failed to fetch messages:", error);
-        setMessages([]);
-      } finally {
-        setLoadingMessages(false);
+        if (senderId === targetUser._id.toString() && isMinimized) {
+          setHasNewMessage(true);
+          setUnreadMessages((prev) => [...prev, newMessage._id]);
+        }
       }
     };
 
-    fetchMessages();
+    const handleTypingIndicator = (data) => {
+      if (data.userId === targetUser._id.toString()) {
+        setIsTyping(true);
+        if (typingTimeout) clearTimeout(typingTimeout);
+        setTypingTimeout(setTimeout(() => setIsTyping(false), 2000));
+      }
+    };
+
+    const handleMessagesRead = (data) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          data.messageIds.includes(msg._id)
+            ? { ...msg, read: true, status: "read" }
+            : msg
+        )
+      );
+    };
+
+    const handleMessageStatusUpdate = (data) => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.tempId === data.tempId
+            ? {
+                ...msg,
+                _id: data._id,
+                status: data.status,
+                timestamp: new Date(data.timestamp),
+              }
+            : msg._id === data._id
+            ? { ...msg, status: data.status }
+            : msg
+        )
+      );
+    };
+
+    socket.on("receive-message", handleIncomingMessage);
+    socket.on("typing", handleTypingIndicator);
+    socket.on("messages-read", handleMessagesRead);
+    socket.on("message-status", handleMessageStatusUpdate);
+
+    return () => {
+      socket.off("receive-message", handleIncomingMessage);
+      socket.off("typing", handleTypingIndicator);
+      socket.off("messages-read", handleMessagesRead);
+      socket.off("message-status", handleMessageStatusUpdate);
+      if (typingTimeout) clearTimeout(typingTimeout);
+    };
+  }, [socket, currentUser?._id, targetUser?._id, isMinimized]);
+
+  // Mark messages as read when chat is opened
+  useEffect(() => {
+    if (!isMinimized && unreadMessages.length > 0 && socket) {
+      socket.emit("mark-as-read", {
+        messageIds: unreadMessages,
+        readerId: currentUser._id,
+      });
+      setUnreadMessages([]);
+      setHasNewMessage(false);
+    }
+  }, [isMinimized, unreadMessages, socket, currentUser?._id]);
+
+  // Handle typing indicator
+  const handleTyping = useCallback(() => {
+    if (socket && message.trim() && currentUser?._id && targetUser?._id) {
+      socket.emit("typing", {
+        senderId: currentUser._id,
+        receiverId: targetUser._id,
+        isTyping: true,
+      });
+    }
+  }, [socket, message, currentUser?._id, targetUser?._id]);
+
+  useEffect(() => {
+    const timer = setTimeout(handleTyping, 500);
+    return () => clearTimeout(timer);
+  }, [message, handleTyping]);
+
+  const fetchMessages = useCallback(async () => {
+    if (!currentUser?._id || !targetUser?._id) return;
+
+    setLoadingMessages(true);
+    try {
+      const response = await fetchData(
+        `/message/${currentUser._id}/${targetUser._id}`
+      );
+
+      const receivedMessages = Array.isArray(response?.data)
+        ? response.data
+        : Array.isArray(response)
+        ? response
+        : [];
+
+      const formattedMessages = receivedMessages.map((msg) => {
+        const senderId =
+          typeof msg.sender === "object" ? msg.sender._id : msg.sender;
+
+        return {
+          ...normalizeMessage(msg),
+          isOwn: senderId === currentUser._id.toString(),
+          status: msg.read ? "read" : "delivered",
+        };
+      });
+
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error("Failed to fetch messages:", error);
+      setMessages([]);
+    } finally {
+      setLoadingMessages(false);
+    }
   }, [currentUser?._id, targetUser?._id, fetchData]);
 
   useEffect(() => {
-    if (!currentUser?._id) return;
+    fetchMessages();
+  }, [fetchMessages]);
 
-    const listenerId = `chat-${currentUser._id}-${targetUser._id}`;
-    dispatch({
-      type: "socket/registerMessageListener",
-      payload: { listenerId, handler: handleMessage },
-    });
-
-    return () => {
-      dispatch({
-        type: "socket/unregisterMessageListener",
-        payload: listenerId,
-      });
-    };
-  }, [dispatch, currentUser?._id, targetUser?._id, handleMessage]);
-
+  // In ChatBox component
   const handleSendMessage = async () => {
-    if (!message.trim() || !currentUser?._id || !targetUser._id) return;
-    if (currentUser._id === targetUser._id) {
-      setSendError("You cannot send messages to yourself");
+    if (!message.trim()) {
+      console.log("Message is empty, not sending");
       return;
     }
 
-    setSendError(null);
-    const timestamp = new Date();
+    if (!currentUser?._id || !targetUser?._id) {
+      console.error(
+        "Missing user IDs - current:",
+        currentUser?._id,
+        "target:",
+        targetUser?._id
+      );
+      return;
+    }
+
+    const tempId = `temp-${Date.now()}`;
     const tempMessage = {
-      _id: `temp-${timestamp.getTime()}`,
+      _id: tempId,
       sender: currentUser._id,
       receiver: targetUser._id,
       content: message.trim(),
-      timestamp,
+      timestamp: new Date(),
       isOwn: true,
       status: "sending",
+      tempId,
     };
 
+    console.log("Adding temporary message:", tempMessage);
     setMessages((prev) => [...prev, tempMessage]);
     setMessage("");
 
     try {
-      dispatch({
-        type: "socket/sendMessage",
-        payload: {
+      console.log("Fetching conversation...");
+      const convResponse = await fetchData(
+        `/message/conversations/${currentUser._id}`
+      );
+      const conversations = convResponse?.data || [];
+      console.log("Found conversations:", conversations);
+
+      let conversation = conversations.find((c) =>
+        c.participants.includes(targetUser._id)
+      );
+
+      if (!conversation) {
+        console.log("No existing conversation, creating new one");
+        const newConv = await updateData("/message", "POST", {
+          sender: currentUser._id,
+          receiver: targetUser._id,
+          content: message.trim(),
+        });
+        conversation = { _id: newConv.data?.conversation._id };
+        console.log("Created new conversation:", conversation);
+      }
+
+      console.log("Sending via socket with payload:", {
+        senderId: currentUser._id,
+        receiverId: targetUser._id,
+        content: message.trim(),
+        conversationId: conversation._id,
+        tempId,
+      });
+
+      socket.emit(
+        "send-message",
+        {
           senderId: currentUser._id,
           receiverId: targetUser._id,
           content: message.trim(),
-          timestamp: timestamp.toISOString(),
+          conversationId: conversation._id,
+          tempId,
         },
-      });
-
-      const response = await updateData("/message", "POST", {
-        sender: currentUser._id,
-        receiver: targetUser._id,
-        content: message.trim(),
-      });
-
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === `temp-${timestamp.getTime()}`
-            ? {
-                ...msg,
-                _id: response.data?._id,
-                status: "delivered",
-                timestamp: new Date(response.data?.createdAt || Date.now()),
-              }
-            : msg
-        )
+        (ack) => {
+          console.log("Received acknowledgment:", ack);
+          if (ack?.error) {
+            console.error("Message send failed:", ack.error);
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.tempId === tempId ? { ...msg, status: "failed" } : msg
+              )
+            );
+            setSendError(ack.error);
+          } else {
+            console.log("Message successfully delivered, updating status");
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.tempId === tempId
+                  ? {
+                      ...msg,
+                      _id: ack._id,
+                      status: ack.status,
+                      timestamp: new Date(ack.timestamp),
+                    }
+                  : msg
+              )
+            );
+          }
+        }
       );
+
+      // Stop typing indicator
+      socket.emit("typing", {
+        senderId: currentUser._id,
+        receiverId: targetUser._id,
+        isTyping: false,
+      });
     } catch (error) {
-      console.error("Failed to send message:", error);
-      setSendError(error.response?.data?.error || "Failed to send message");
+      console.error("Message send error:", error);
       setMessages((prev) =>
         prev.map((msg) =>
-          msg._id === `temp-${timestamp.getTime()}`
-            ? { ...msg, status: "failed" }
-            : msg
+          msg.tempId === tempId ? { ...msg, status: "failed" } : msg
         )
       );
+      setSendError(error.response?.data?.error || "Failed to send message");
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
     }
   };
@@ -217,12 +362,9 @@ const ChatBox = ({
         <div className="flex items-center space-x-3">
           <div className="relative">
             <img
-              src={targetUser?.profileImage}
+              src={targetUser?.profileImage || "https://placehold.co/400"}
               alt={targetUser?.name}
               className="w-8 h-8 rounded-full object-cover border-2 border-white"
-              onError={(e) => {
-                e.target.src = "https://placehold.co/400";
-              }}
             />
             <div
               className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
@@ -263,12 +405,9 @@ const ChatBox = ({
         <div className="flex items-center space-x-3">
           <div className="relative">
             <img
-              src={targetUser?.profileImage}
+              src={targetUser?.profileImage || "https://placehold.co/400"}
               alt={targetUser?.name}
               className="w-10 h-10 rounded-full object-cover border-2 border-white"
-              onError={(e) => {
-                e.target.src = "https://placehold.co/400";
-              }}
             />
             <div
               className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
@@ -280,6 +419,9 @@ const ChatBox = ({
             <h3 className="font-semibold">{targetUser?.name}</h3>
             <p className="text-xs opacity-80">
               {isOnline ? "Online" : "Offline"}
+              {isTyping && (
+                <span className="ml-2 text-blue-200">Typing...</span>
+              )}
             </p>
           </div>
         </div>
@@ -331,7 +473,7 @@ const ChatBox = ({
 
               return (
                 <div
-                  key={msg._id || msg.timestamp?.getTime() || Math.random()}
+                  key={msg._id || msg.tempId || Math.random()}
                   className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                 >
                   <div
@@ -358,11 +500,21 @@ const ChatBox = ({
                       >
                         {formatMessageTime(msg.timestamp)}
                       </p>
+                      {isOwn && (
+                        <span className="flex items-center">
+                          {msg.status === "read" ? (
+                            <FaCircle className="text-xs text-blue-300" />
+                          ) : (
+                            <FaCircle className="text-xs text-gray-400" />
+                          )}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
               );
             })}
+            <div ref={messagesEndRef} />
           </div>
         )}
       </div>

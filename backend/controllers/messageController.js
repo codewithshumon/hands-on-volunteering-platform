@@ -40,7 +40,16 @@ export const sendMessage = async (req, res) => {
     conversation.unreadCount += 1;
     await conversation.save();
 
-    res.status(201).json(newMessage);
+    // Populate sender/receiver for socket emission
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate("sender", "name profileImage")
+      .populate("receiver", "name profileImage")
+      .lean();
+
+    res.status(201).json({
+      ...populatedMessage,
+      conversationId: conversation._id,
+    });
   } catch (error) {
     console.error("[ERROR in sendMessage]", error);
     res.status(500).json({ error: "Internal server error" });
@@ -55,8 +64,14 @@ export const getConversations = async (req, res) => {
     const conversations = await Conversation.find({
       participants: { $in: [userId] },
     })
-      .populate("participants", "name avatar")
-      .populate("lastMessage")
+      .populate("participants", "name profileImage")
+      .populate({
+        path: "lastMessage",
+        populate: [
+          { path: "sender", select: "name profileImage" },
+          { path: "receiver", select: "name profileImage" },
+        ],
+      })
       .sort({ updatedAt: -1 });
 
     res.status(200).json(conversations);
@@ -85,17 +100,9 @@ export const getMessages = async (req, res) => {
       ],
     })
       .sort({ createdAt: 1 })
-      .populate({
-        path: "sender",
-        select: "_id name profileImage",
-        model: "User",
-      })
-      .populate({
-        path: "receiver",
-        select: "_id name profileImage",
-        model: "User",
-      })
-      .lean(); // Convert to plain JavaScript objects
+      .populate("sender", "name profileImage")
+      .populate("receiver", "name profileImage")
+      .lean();
 
     // Mark messages as read and update conversation
     await Promise.all([
@@ -105,7 +112,7 @@ export const getMessages = async (req, res) => {
           receiver: senderId,
           read: false,
         },
-        { $set: { read: true } }
+        { $set: { read: true, readAt: new Date(), status: "read" } }
       ),
       Conversation.updateOne(
         {
@@ -122,16 +129,7 @@ export const getMessages = async (req, res) => {
     const formattedMessages = messages.map((message) => ({
       ...message,
       isOwn: message.sender._id.toString() === senderId,
-      sender: {
-        _id: message.sender._id,
-        name: message.sender.name,
-        avatar: message.sender.profileImage, // Using profileImage field
-      },
-      receiver: {
-        _id: message.receiver._id,
-        name: message.receiver.name,
-        avatar: message.receiver.profileImage, // Using profileImage field
-      },
+      timestamp: message.createdAt,
     }));
 
     res.status(200).json(formattedMessages);
@@ -148,28 +146,30 @@ export const getMessages = async (req, res) => {
 export const markAsRead = async (req, res) => {
   try {
     const { conversationId } = req.params;
+    const { userId } = req.body;
 
     const conversation = await Conversation.findById(conversationId);
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });
     }
 
-    // Mark all messages in this conversation as read
+    // Get the other participant
+    const otherParticipant = conversation.participants.find(
+      (p) => p.toString() !== userId
+    );
+
+    if (!otherParticipant) {
+      return res.status(400).json({ error: "Invalid conversation" });
+    }
+
+    // Mark all messages from other participant as read
     await Message.updateMany(
       {
-        $or: [
-          {
-            sender: conversation.participants[0],
-            receiver: conversation.participants[1],
-          },
-          {
-            sender: conversation.participants[1],
-            receiver: conversation.participants[0],
-          },
-        ],
+        sender: otherParticipant,
+        receiver: userId,
         read: false,
       },
-      { $set: { read: true } }
+      { $set: { read: true, readAt: new Date(), status: "read" } }
     );
 
     // Reset unread count
