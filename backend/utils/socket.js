@@ -1,12 +1,9 @@
 import { Server } from "socket.io";
+import jwt from "jsonwebtoken";
+import Message from "../models/message/MessageSchema.js";
+import Conversation from "../models/message/ConversationSchema.js";
 
-const connectionStats = {
-  totalConnections: 0,
-  activeConnections: 0,
-};
-
-const onlineUsers = new Map(); // userId -> { socketId, lastActive }
-const socketUsers = new Map(); // socketId -> userId
+const onlineUsers = new Map();
 
 export const initializeSocket = (server) => {
   const io = new Server(server, {
@@ -15,147 +12,150 @@ export const initializeSocket = (server) => {
       methods: ["GET", "POST"],
       credentials: true,
     },
-    pingTimeout: 60000,
-    pingInterval: 25000,
     connectionStateRecovery: {
-      maxDisconnectionDuration: 120000,
+      maxDisconnectionDuration: 2 * 60 * 1000,
     },
   });
 
+  io.use(async (socket, next) => {
+    try {
+      const token = socket.handshake.auth.token;
+      if (!token) throw new Error("No token provided");
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.userId;
+      console.log(`Authenticated socket for user ${decoded.userId}`);
+      next();
+    } catch (err) {
+      console.error("Socket auth error:", err.message);
+      next(new Error("Authentication failed"));
+    }
+  });
+
   io.on("connection", (socket) => {
-    connectionStats.totalConnections++;
-    connectionStats.activeConnections++;
+    console.log(`New connection: ${socket.id} (User: ${socket.userId})`);
 
-    console.log(`🔌 New connection (ID: ${socket.id})`);
-    console.log(
-      `📊 Stats: ${connectionStats.activeConnections} active / ${connectionStats.totalConnections} total`
-    );
+    socket.on("authenticate", ({ userId, token }) => {
+      try {
+        if (userId !== socket.userId) throw new Error("User ID mismatch");
 
-    // Authentication handler
-    socket.on("authenticate", (userId) => {
-      if (!userId) {
-        console.warn(`⚠️ Empty userId from socket ${socket.id}`);
-        return;
+        onlineUsers.set(userId, {
+          socketId: socket.id,
+          lastActive: Date.now(),
+        });
+
+        socket.join(userId);
+        socket.emit("authenticated");
+
+        io.emit("presence-update", {
+          userId,
+          status: "online",
+        });
+
+        console.log(`User ${userId} authenticated on socket ${socket.id}`);
+      } catch (err) {
+        console.error("Authentication error:", err.message);
+        socket.disconnect();
       }
-
-      // Update tracking maps
-      onlineUsers.set(userId, {
-        socketId: socket.id,
-        lastActive: Date.now(),
-      });
-      socketUsers.set(socket.id, userId);
-      socket.join(userId); // Join user-specific room
-
-      console.log(`✅ User ${userId} authenticated (Socket: ${socket.id})`);
-      console.log(`👥 Online users: ${onlineUsers.size}`);
-
-      // Broadcast presence
-      io.emit("user-online", userId);
-      socket.emit("online-users", Array.from(onlineUsers.keys()));
     });
 
-    // Message handler
-    socket.on("send-message", (message, callback) => {
+    socket.on("send-message", async (messageData, acknowledge) => {
       try {
-        const senderId = socketUsers.get(socket.id);
+        console.log("Received message data:", messageData);
 
-        // Validate sender
-        if (!senderId || senderId !== message.senderId) {
-          throw new Error("Unauthorized message attempt");
+        const { senderId, receiverId, content, conversationId, tempId } =
+          messageData;
+
+        if (!onlineUsers.has(senderId)) {
+          throw new Error(`Sender ${senderId} not found in online users`);
         }
 
-        console.log(`✉️ Message from ${senderId} to ${message.receiverId}`);
-
-        // Add server-side timestamp
-        const completeMessage = {
-          ...message,
-          serverTimestamp: new Date().toISOString(),
+        console.log(`Saving message from ${senderId} to ${receiverId}`);
+        const message = await Message.create({
+          conversation: conversationId,
+          sender: senderId,
+          receiver: receiverId,
+          content,
           status: "delivered",
+        });
+
+        await Conversation.findByIdAndUpdate(conversationId, {
+          lastMessage: message._id,
+          $inc: { unreadCount: 1 },
+        });
+
+        const messageToSend = {
+          _id: message._id,
+          conversation: conversationId,
+          sender: senderId,
+          receiver: receiverId,
+          content,
+          status: "delivered",
+          createdAt: message.createdAt,
+          tempId,
         };
 
-        // Check if recipient is online
-        if (onlineUsers.has(message.receiverId)) {
-          // Send to recipient's room
-          io.to(message.receiverId).emit("receive-message", completeMessage);
-          console.log(`📤 Message delivered to ${message.receiverId}`);
-        } else {
-          console.log(`⏳ ${message.receiverId} is offline, storing message`);
-          // Here you would typically store the message in your database
+        // Send to receiver if online
+        if (onlineUsers.has(receiverId)) {
+          const receiverSocket = onlineUsers.get(receiverId).socketId;
+          console.log(`Sending to receiver socket: ${receiverSocket}`);
+          io.to(receiverSocket).emit("receive-message", {
+            ...messageToSend,
+            isOwn: false,
+          });
         }
 
-        // Send delivery confirmation to sender
-        callback({
-          status: "success",
-          message: completeMessage,
-        });
-
-        // Also send back to sender for their own chat
-        socket.emit("receive-message", {
-          ...completeMessage,
+        // Send back to sender
+        const senderSocket = onlineUsers.get(senderId).socketId;
+        console.log(`Sending to sender socket: ${senderSocket}`);
+        io.to(senderSocket).emit("receive-message", {
+          ...messageToSend,
           isOwn: true,
         });
-      } catch (error) {
-        console.error("Message handling error:", error);
-        callback({
-          status: "error",
-          error: error.message,
+
+        acknowledge({
+          _id: message._id,
+          tempId,
+          status: "delivered",
+          timestamp: message.createdAt,
         });
+
+        console.log(`Message ${message._id} processed successfully`);
+      } catch (error) {
+        console.error("Message processing error:", error);
+        acknowledge({ error: error.message });
       }
     });
 
-    // Heartbeat for connection monitoring
-    socket.on("heartbeat", (userId) => {
-      if (onlineUsers.has(userId)) {
-        onlineUsers.get(userId).lastActive = Date.now();
-      }
-    });
-
-    // Disconnection handler
     socket.on("disconnect", () => {
-      connectionStats.activeConnections--;
-
-      const userId = socketUsers.get(socket.id);
-      if (userId) {
-        onlineUsers.delete(userId);
-        socketUsers.delete(socket.id);
-        io.emit("user-offline", userId);
-        console.log(`❌ User ${userId} disconnected`);
+      console.log(`Socket disconnected: ${socket.id}`);
+      for (const [userId, data] of onlineUsers.entries()) {
+        if (data.socketId === socket.id) {
+          onlineUsers.delete(userId);
+          io.emit("presence-update", {
+            userId,
+            status: "offline",
+          });
+          console.log(`User ${userId} marked offline`);
+          break;
+        }
       }
+    });
 
-      console.log(
-        `📊 Stats: ${connectionStats.activeConnections} active / ${connectionStats.totalConnections} total`
-      );
+    // Health check
+    socket.on("ping", (cb) => {
+      console.log("Received ping from", socket.id);
+      cb();
     });
   });
 
-  // Cleanup inactive connections
+  // Log online users periodically
   setInterval(() => {
-    const now = Date.now();
-    onlineUsers.forEach((user, userId) => {
-      if (now - user.lastActive > 120000) {
-        // 2 minutes inactive
-        onlineUsers.delete(userId);
-        socketUsers.delete(user.socketId);
-        io.emit("user-offline", userId);
-        console.log(`♻️ Cleaned up inactive user ${userId}`);
-      }
-    });
-  }, 60000); // Run every minute
+    console.log("Currently online users:", Array.from(onlineUsers.keys()));
+  }, 30000);
 
   return io;
 };
-
-function cleanupInactiveUsers() {
-  const now = Date.now();
-  onlineUsers.forEach((user, userId) => {
-    if (now - user.lastActive > 120000) {
-      onlineUsers.delete(userId);
-      socketUsers.delete(user.socketId);
-      io.emit("user-offline", userId);
-      console.log(`♻️ Cleaned up inactive user ${userId}`);
-    }
-  });
-}
 
 // Socket-related route handlers
 export const socketRoutes = (app) => {
@@ -184,201 +184,3 @@ export const socketRoutes = (app) => {
     });
   });
 };
-
-//
-//
-//Index.js
-// import dotenv from "dotenv";
-// dotenv.config();
-
-// import express from "express";
-// import cookieParser from "cookie-parser";
-// import cors from "cors";
-// import mongoose from "mongoose";
-// import { createServer } from "http";
-// import { Server } from "socket.io";
-// import "./config/cron.js";
-
-// import authRoutes from "./routes/authRoutes.js";
-// import userRoutes from "./routes/userRoutes.js";
-// import eventRoutes from "./routes/eventRoutes.js";
-// import communityRoutes from "./routes/communityRoutes.js";
-
-// const app = express();
-// const port = process.env.PORT || 8000;
-
-// // Create HTTP server
-// const server = createServer(app);
-
-// // Initialize Socket.IO with enhanced configuration
-// const io = new Server(server, {
-//   cors: {
-//     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-//     methods: ["GET", "POST"],
-//     credentials: true,
-//   },
-//   pingTimeout: 60000,
-//   pingInterval: 25000,
-//   connectionStateRecovery: {
-//     maxDisconnectionDuration: 120000,
-//   },
-// });
-
-// // Enhanced connection tracking
-// const connectionStats = {
-//   totalConnections: 0,
-//   activeConnections: 0,
-// };
-
-// const onlineUsers = new Map(); // userId -> { socketId, lastActive }
-// const socketUsers = new Map(); // socketId -> userId
-
-// // Socket.IO connection handler
-// io.on("connection", (socket) => {
-//   connectionStats.totalConnections++;
-//   connectionStats.activeConnections++;
-
-//   console.log(`🔌 New connection (ID: ${socket.id})`);
-//   console.log(
-//     `📊 Stats: ${connectionStats.activeConnections} active / ${connectionStats.totalConnections} total`
-//   );
-
-//   // Authentication handler
-//   socket.on("authenticate", (userId) => {
-//     if (!userId) {
-//       console.warn(`⚠️  Empty userId from socket ${socket.id}`);
-//       return;
-//     }
-
-//     // Update tracking maps
-//     onlineUsers.set(userId, {
-//       socketId: socket.id,
-//       lastActive: Date.now(),
-//     });
-//     socketUsers.set(socket.id, userId);
-
-//     console.log(`✅ User ${userId} authenticated (Socket: ${socket.id})`);
-//     console.log(`👥 Online users: ${onlineUsers.size}`);
-
-//     // Broadcast presence
-//     io.emit("user-online", userId);
-//     socket.emit("online-users", Array.from(onlineUsers.keys()));
-//   });
-
-//   // Heartbeat monitoring
-//   socket.on("heartbeat", (userId) => {
-//     if (onlineUsers.has(userId)) {
-//       onlineUsers.get(userId).lastActive = Date.now();
-//     }
-//   });
-
-//   // Health check endpoint
-//   socket.on("health-check", (callback) => {
-//     const userId = socketUsers.get(socket.id);
-//     callback({
-//       status: "healthy",
-//       timestamp: Date.now(),
-//       userId,
-//       socketId: socket.id,
-//       onlineUsers: Array.from(onlineUsers.keys()),
-//     });
-//   });
-
-//   // Disconnection handler
-//   socket.on("disconnect", () => {
-//     connectionStats.activeConnections--;
-
-//     const userId = socketUsers.get(socket.id);
-//     if (userId) {
-//       onlineUsers.delete(userId);
-//       socketUsers.delete(socket.id);
-
-//       console.log(`❌ User ${userId} disconnected`);
-//       console.log(`👥 Remaining online: ${onlineUsers.size}`);
-
-//       io.emit("user-offline", userId);
-//     }
-
-//     console.log(
-//       `📊 Stats: ${connectionStats.activeConnections} active / ${connectionStats.totalConnections} total`
-//     );
-//   });
-// });
-
-// // Dead connection cleanup
-// setInterval(() => {
-//   const now = Date.now();
-//   onlineUsers.forEach((user, userId) => {
-//     if (now - user.lastActive > 120000) {
-//       // 2 minutes inactive
-//       onlineUsers.delete(userId);
-//       socketUsers.delete(user.socketId);
-//       io.emit("user-offline", userId);
-//       console.log(`♻️  Cleaned up inactive user ${userId}`);
-//     }
-//   });
-// }, 60000); // Run every minute
-
-// // Express middleware
-// app.use(
-//   cors({
-//     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-//     methods: ["POST", "GET", "PUT", "DELETE"],
-//     credentials: true,
-//   })
-// );
-
-// mongoose.set("strictQuery", false);
-
-// const connectDB = async () => {
-//   try {
-//     await mongoose.connect(process.env.DATABASE_URL);
-//     console.log("MongoDB database is connected");
-//   } catch (error) {
-//     console.log(`MongoDB database connection failed: ${error}`);
-//   }
-// };
-
-// // Status endpoints
-// app.get("/api/socket/status", (req, res) => {
-//   res.json({
-//     serverTime: Date.now(),
-//     connections: {
-//       total: connectionStats.totalConnections,
-//       active: connectionStats.activeConnections,
-//       sockets: Array.from(socketUsers.entries()).map(([socketId, userId]) => ({
-//         socketId,
-//         userId,
-//       })),
-//     },
-//     onlineUsers: Array.from(onlineUsers.keys()),
-//   });
-// });
-
-// app.get("/api/socket/debug", (req, res) => {
-//   res.json({
-//     onlineUsers: Object.fromEntries(onlineUsers),
-//     socketUsers: Object.fromEntries(socketUsers),
-//     connectionStats,
-//   });
-// });
-
-// // Routes
-// app.get("/", (req, res) => {
-//   res.send("API is working");
-// });
-
-// app.use(express.json());
-// app.use(cookieParser());
-
-// app.use("/api/v1/auth", authRoutes);
-// app.use("/api/v1/user", userRoutes);
-// app.use("/api/v1/event", eventRoutes);
-// app.use("/api/v1/community", communityRoutes);
-
-// // Start server
-// server.listen(port, () => {
-//   connectDB();
-//   console.log(`Server is running on port ${port}`);
-//   console.log(`Socket.IO listening for connections`);
-// });
