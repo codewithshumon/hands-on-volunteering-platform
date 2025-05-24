@@ -23,7 +23,7 @@ const server = createServer(app);
 // Express middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: process.env.FRONTEND_URL || true,
     methods: ["POST", "GET", "PUT", "DELETE"],
     credentials: true,
   })
