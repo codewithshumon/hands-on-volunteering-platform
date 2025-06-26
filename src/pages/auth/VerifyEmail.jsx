@@ -69,7 +69,7 @@ const VerifyEmail = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/v1/auth/verify-email",
+        "https://hands-on-volunteer.onrender.com/api/v1/auth/verify-email",
         formData
       );
 
@@ -90,7 +90,7 @@ const VerifyEmail = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:3000/api/v1/auth/resend-verification-code",
+        "https://hands-on-volunteer.onrender.com/api/v1/auth/resend-verification-code",
         { email: formData.email, purpose: "email-verification" }
       );
 

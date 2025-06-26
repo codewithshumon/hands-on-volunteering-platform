@@ -48,7 +48,7 @@ const AuthPage = ({ isLoginPage }) => {
     try {
       if (isLogin) {
         const response = await axios.post(
-          "http://localhost:3000/api/v1/auth/login",
+          "https://hands-on-volunteer.onrender.com/api/v1/auth/login",
           formData
         );
 
@@ -75,7 +75,7 @@ const AuthPage = ({ isLoginPage }) => {
       } else {
         // Signup logic
         const response = await axios.post(
-          "http://localhost:3000/api/v1/auth/signup",
+          "https://hands-on-volunteer.onrender.com/api/v1/auth/signup",
           formData
         );
 

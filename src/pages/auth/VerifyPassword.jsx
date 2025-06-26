@@ -43,7 +43,7 @@ const VerifyPassword = () => {
     setError("");
     try {
       await axios.post(
-        "http://localhost:3000/api/v1/auth/resend-verification-code",
+        "https://hands-on-volunteer.onrender.com/api/v1/auth/resend-verification-code",
         {
           email,
         }
@@ -63,10 +63,13 @@ const VerifyPassword = () => {
     setLoading(true); // Start verification loading
     setError("");
     try {
-      await axios.post("http://localhost:3000/api/v1/auth/verify-email", {
-        email,
-        code: verificationCode,
-      });
+      await axios.post(
+        "https://hands-on-volunteer.onrender.com/api/v1/auth/verify-email",
+        {
+          email,
+          code: verificationCode,
+        }
+      );
       setCodeVerified(true);
       setShowSuccessMessage(false);
     } catch (error) {
@@ -86,10 +89,13 @@ const VerifyPassword = () => {
     setLoading(true);
     setError("");
     try {
-      await axios.post("http://localhost:3000/api/v1/auth/reset-password", {
-        email,
-        newPassword,
-      });
+      await axios.post(
+        "https://hands-on-volunteer.onrender.com/api/v1/auth/reset-password",
+        {
+          email,
+          newPassword,
+        }
+      );
 
       navigate("/login", { state: { email } }); // Redirect to login with email
     } catch (error) {
